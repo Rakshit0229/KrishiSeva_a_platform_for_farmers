@@ -1,0 +1,47 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: krishi_procurement
+      POSTGRES_USER: krishi_user
+      POSTGRES_PASSWORD: krishi_password
+    ports: ["5432:5432"]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./apps/backend/migrations/001_initial.sql:/docker-entrypoint-initdb.d/001.sql
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    ports: ["6379:6379"]
+    volumes: [redis_data:/data]
+    restart: unless-stopped
+
+  backend:
+    build: ./apps/backend
+    ports: ["4000:4000"]
+    environment:
+      DATABASE_URL: postgresql://krishi_user:krishi_password@postgres:5432/krishi_procurement
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: krishiseva_secure_secret_key_change_in_production
+      TWILIO_ACCOUNT_SID: demo
+      TWILIO_AUTH_TOKEN: demo
+      TWILIO_PHONE_NUMBER: "+15551234567"
+      WEIGHBRIDGE_API_KEY: krishiseva_iot_key_2026
+    depends_on: [postgres, redis]
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports: ["80:80", "3000:80"]
+    volumes:
+      - ./apps/frontend/dist:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on: [backend]
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -1,0 +1,19 @@
+{
+  "name": "krishiseva-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=apps/backend\" \"npm run dev --workspace=apps/frontend\"",
+    "dev:backend": "npm run dev --workspace=apps/backend",
+    "dev:frontend": "npm run dev --workspace=apps/frontend",
+    "build": "npm run build --workspace=apps/backend && npm run build --workspace=apps/frontend",
+    "install:all": "npm install"
+  },
+  "devDependencies": {
+    "@vercel/node": "^13.0.0",
+    "concurrently": "^9.1.2"
+  }
+}
