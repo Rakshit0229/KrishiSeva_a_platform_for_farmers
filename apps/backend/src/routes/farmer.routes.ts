@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { memoryStore } from '../db';
-import { authMiddleware, requireRole, logAuditAction } from '../middleware/auth';
+import { authMiddleware, requireRole, requireSensitiveActionVerification, logAuditAction } from '../middleware/auth';
 
 const router = Router();
 
@@ -234,6 +234,30 @@ router.get('/:id/flags', authMiddleware, (req: Request, res: Response) => {
 // GET /api/farmers/flags/all (Admin/Officer list all active flags)
 router.get('/flags/all', authMiddleware, requireRole('officer', 'admin'), (_req: Request, res: Response) => {
   return res.json(farmerFlags);
+});
+
+// DELETE /api/farmers/account (Sensitive Action: Requires single-use Confirmation Token)
+router.delete('/account', authMiddleware, requireSensitiveActionVerification('DELETE_ACCOUNT'), (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const user = memoryStore.users.find(u => u.id === userId);
+  if (!user) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+
+  // Soft delete / deactivate user account
+  user.is_active = false;
+  user.deactivated_at = new Date().toISOString();
+
+  // Invalidate all active sessions for this user
+  memoryStore.active_sessions.forEach(s => {
+    if (s.user_id === userId) s.is_revoked = true;
+  });
+
+  logAuditAction(userId, req.user!.role, 'ACCOUNT_DELETED_SENSITIVE', 'users', userId);
+
+  return res.json({
+    message: 'Your account has been securely deactivated and all active sessions have been terminated.',
+  });
 });
 
 export default router;

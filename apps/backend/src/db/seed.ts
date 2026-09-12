@@ -183,12 +183,31 @@ export async function seedDatabase() {
   console.log('🌱 Seeding KrishiSeva dataset...');
 
   // 1. Memory Store Seeding
-  memoryStore.msp_rates = [...INITIAL_MSP_RATES];
-  memoryStore.users = [...INITIAL_USERS];
-  memoryStore.procurement_centres = [...INITIAL_CENTRES];
-  memoryStore.farmer_profiles = [...INITIAL_PROFILES];
-  memoryStore.announcements = [...INITIAL_ANNOUNCEMENTS];
-  memoryStore.faq_articles = [...INITIAL_FAQS];
+  if (memoryStore.msp_rates.length === 0) {
+    memoryStore.msp_rates = [...INITIAL_MSP_RATES];
+  }
+  if (memoryStore.users.length === 0) {
+    memoryStore.users = [...INITIAL_USERS];
+  } else {
+    // Preserve already registered users and only add initial users that aren't present
+    INITIAL_USERS.forEach(iu => {
+      if (!memoryStore.users.some(u => u.phone === iu.phone)) {
+        memoryStore.users.push(iu);
+      }
+    });
+  }
+  if (memoryStore.procurement_centres.length === 0) {
+    memoryStore.procurement_centres = [...INITIAL_CENTRES];
+  }
+  if (memoryStore.farmer_profiles.length === 0) {
+    memoryStore.farmer_profiles = [...INITIAL_PROFILES];
+  }
+  if (memoryStore.announcements.length === 0) {
+    memoryStore.announcements = [...INITIAL_ANNOUNCEMENTS];
+  }
+  if (memoryStore.faq_articles.length === 0) {
+    memoryStore.faq_articles = [...INITIAL_FAQS];
+  }
 
   // 2. Generate slots for next 7 days
   const timeSlots = [

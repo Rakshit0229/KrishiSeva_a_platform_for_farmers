@@ -42,6 +42,10 @@ export const memoryStore: {
   farmer_flags: any[];
   faq_articles: any[];
   weighbridge_readings: any[];
+  password_resets: any[];
+  oauth_states: any[];
+  active_sessions: any[];
+  sensitive_action_tokens: any[];
 } = {
   users: [],
   farmer_profiles: [],
@@ -68,6 +72,10 @@ export const memoryStore: {
   farmer_flags: [],
   faq_articles: [],
   weighbridge_readings: [],
+  password_resets: [],
+  oauth_states: [],
+  active_sessions: [],
+  sensitive_action_tokens: [],
 };
 
 export async function checkDbConnection(): Promise<boolean> {

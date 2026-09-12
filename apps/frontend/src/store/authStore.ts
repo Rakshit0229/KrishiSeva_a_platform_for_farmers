@@ -5,6 +5,9 @@ export interface User {
   phone: string;
   name: string;
   role: 'farmer' | 'officer' | 'admin';
+  email?: string;
+  mfa_enabled?: boolean;
+  has_password?: boolean;
   profile?: any;
 }
 
@@ -45,6 +48,24 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.token) {
+          fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${parsed.token}`,
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+          }).catch(() => {});
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
     localStorage.removeItem(STORAGE_KEY);
     set({ user: null, token: null, isAuthenticated: false });
   },
