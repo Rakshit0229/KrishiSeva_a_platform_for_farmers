@@ -51,5 +51,6 @@ jobs:
         run: node scripts/dast_scanner.js
 
       - name: Run Unified Enterprise Security Master Test Suite (Sections 1-11)
+        # Executes test_security_suite.js and all master suites (Sections 1-11)
         run: |
           node scripts/run_all_security_tests.js

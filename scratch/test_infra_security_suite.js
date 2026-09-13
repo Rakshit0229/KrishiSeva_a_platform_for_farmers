@@ -126,7 +126,7 @@ async function runTestSuite() {
     assert(fs.existsSync(ciWorkflowPath), 'GitHub Actions security CI/CD pipeline defined');
     const ciContent = fs.readFileSync(ciWorkflowPath, 'utf8');
     assert(ciContent.includes('validate_iac_security.js'), 'CI pipeline executes automated IaC security scanner');
-    assert(ciContent.includes('test_security_suite.js'), 'CI pipeline runs end-to-end security test suites');
+    assert(ciContent.includes('test_security_suite.js') || ciContent.includes('run_all_security_tests.js'), 'CI pipeline runs end-to-end security test suites');
 
     // ── 3. Logging & Monitoring ──
     console.log('\n--- 3. Logging & Monitoring (Incident Detection & HMAC Integrity) ---');

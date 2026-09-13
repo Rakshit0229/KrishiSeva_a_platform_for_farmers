@@ -1,6 +1,6 @@
 # KrishiSeva Software Bill of Materials (SBOM) & Dependency Inventory
 
-**Generated**: 2026-09-13T18:56:18.544Z  
+**Generated**: 2026-09-13T19:21:38.863Z  
 **Monorepo**: KrishiSeva Smart Farmer Procurement Platform  
 **Compliance**: NIST SP 800-161 (Cybersecurity Supply Chain Risk Management), Executive Order 14028
 
