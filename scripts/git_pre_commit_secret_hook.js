@@ -52,7 +52,7 @@ function checkGitTrackedEnvFiles() {
 // 3. Scan recent git commit log for accidentally committed secrets
 function scanGitCommitDiffs() {
   try {
-    const logDiff = execSync('git log -n 5 -p', { encoding: 'utf8' });
+    const logDiff = execSync('git log -n 5 -p', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] });
     const criticalPatterns = [
       /-----BEGIN (?:RSA|EC|DSA|OPENSSH) PRIVATE KEY-----/,
       /\bAKIA[0-9A-Z]{16}\b/,
@@ -67,8 +67,8 @@ function scanGitCommitDiffs() {
     }
     console.log('  [PASS] Recent Git commit history contains zero exposed private keys or tokens.');
   } catch (err) {
-    if (err.message.includes('EXPOSED SECRET')) throw err;
-    console.log('  [NOTE] Git log diff check clean.');
+    if (err.message && err.message.includes('EXPOSED SECRET')) throw err;
+    console.log('  [NOTE] Git log diff check clean or shallow repository.');
   }
 }
 

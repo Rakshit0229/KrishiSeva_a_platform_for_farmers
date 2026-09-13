@@ -85,6 +85,7 @@ for (const suite of SUITES) {
     results.push({ name: suite.name, status: 'PASSED', durationMs });
   } catch (err) {
     const durationMs = Date.now() - startTime;
+    console.error(`❌ Suite failed: ${suite.name} - ${err.message}`);
     results.push({ name: suite.name, status: 'FAILED', durationMs });
     allPassed = false;
   }
