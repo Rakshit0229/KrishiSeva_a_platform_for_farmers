@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { memoryStore } from '../db';
 import { generateSecureToken } from '../services/security.service';
+import { createRefreshToken, validateApiKey } from '../services/keyRotation.service';
 
 export interface AuthenticatedUser {
   id: string;
@@ -21,11 +22,22 @@ declare global {
 
 const JWT_SECRET = process.env.JWT_SECRET || 'krishiseva_secure_secret_key_change_in_production';
 
+const JWT_SIGN_OPTIONS: jwt.SignOptions = {
+  expiresIn: '24h',
+  algorithm: 'HS256',
+  issuer: 'krishiseva.gov.in',
+  audience: 'krishiseva-app',
+};
+
 /**
  * 2. Secure Session Management & Session Fixation Protection
  * Issues fresh cryptographic sessionId per login and stores in active_sessions
  */
-export function createSession(user: { id: string; phone: string; name: string; role: 'farmer' | 'officer' | 'admin' }, ip: string = '127.0.0.1', userAgent: string = 'browser'): { token: string; sessionId: string } {
+export function createSession(
+  user: { id: string; phone: string; name: string; role: 'farmer' | 'officer' | 'admin' },
+  ip: string = '127.0.0.1',
+  userAgent: string = 'browser'
+): { token: string; sessionId: string; refreshToken: string } {
   const sessionId = `sess_${generateSecureToken(16)}`;
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
@@ -41,13 +53,17 @@ export function createSession(user: { id: string; phone: string; name: string; r
 
   memoryStore.active_sessions.unshift(sessionRecord);
 
+  // 6. Hardened JWT Signing with strict algorithm, issuer, and audience
   const token = jwt.sign(
     { id: user.id, phone: user.phone, name: user.name, role: user.role, sessionId },
     JWT_SECRET,
-    { expiresIn: '24h' }
+    JWT_SIGN_OPTIONS
   );
 
-  return { token, sessionId };
+  // 9. Generate fresh refresh token for token rotation
+  const { rawToken: refreshToken } = createRefreshToken(user.id);
+
+  return { token, sessionId, refreshToken };
 }
 
 export function revokeSession(sessionId: string): void {
@@ -83,24 +99,49 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
   }
 
   if (!token) {
-    return res.status(401).json({ error: 'Authentication token missing or invalid' });
+    const errorId = `err_auth_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    return res.status(401).json({
+      error: 'Authentication token missing or invalid',
+      code: 'AUTH_TOKEN_MISSING',
+      error_id: errorId,
+      status: 401,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as AuthenticatedUser;
+    // 6. Hardened JWT Verification: Enforce HS256 algorithm to prevent alg:none downgrade
+    const decoded = jwt.verify(token, JWT_SECRET, {
+      algorithms: ['HS256'],
+    }) as AuthenticatedUser;
 
     // Check server-side session revocation (Secure Logout check)
     if (decoded.sessionId) {
       const activeSession = memoryStore.active_sessions.find(s => s.id === decoded.sessionId);
       if (activeSession && activeSession.is_revoked) {
-        return res.status(401).json({ error: 'Session has been revoked/logged out. Please login again.' });
+        const errorId = `err_sess_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        return res.status(401).json({
+          error: 'Session has been revoked/logged out. Please login again.',
+          code: 'SESSION_REVOKED',
+          error_id: errorId,
+          status: 401,
+          timestamp: new Date().toISOString(),
+        });
       }
     }
 
     req.user = decoded;
     next();
-  } catch (err) {
-    return res.status(401).json({ error: 'Session expired or invalid token' });
+  } catch (err: any) {
+    const isExpired = err?.name === 'TokenExpiredError';
+    const errorId = `err_jwt_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    return res.status(401).json({
+      error: isExpired ? 'Session expired. Please refresh token or login again.' : 'Invalid authentication token',
+      code: isExpired ? 'TOKEN_EXPIRED' : 'INVALID_TOKEN',
+      error_id: errorId,
+      status: 401,
+      timestamp: new Date().toISOString(),
+    });
   }
 }
 
@@ -189,5 +230,39 @@ export function logDataAccess(
     ip_address: ipAddress,
     created_at: new Date().toISOString(),
   });
+}
+
+/**
+ * 9. API Key Authentication & Verification Middleware
+ * Accepts X-API-Key header or X-Weighbridge-Key header, supporting active & grace-period keys
+ */
+export function requireApiKey(requiredRole?: string) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const rawKey = (req.headers['x-api-key'] || req.headers['x-weighbridge-key']) as string;
+    if (!rawKey) {
+      return res.status(401).json({
+        error: 'API key is required in X-API-Key or X-Weighbridge-Key header',
+        code: 'API_KEY_REQUIRED',
+        status: 401,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    const { isValid, role, isGracePeriod } = validateApiKey(rawKey, requiredRole);
+    if (!isValid) {
+      return res.status(403).json({
+        error: 'Invalid, expired, or revoked API key',
+        code: 'API_KEY_INVALID',
+        status: 403,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    if (isGracePeriod) {
+      res.setHeader('X-API-Key-Warning', 'This API key is in its 24-hour grace overlap period. Please migrate to the newly rotated key.');
+    }
+
+    next();
+  };
 }
 

@@ -54,6 +54,9 @@ export const memoryStore: {
   oauth_states: any[];
   active_sessions: any[];
   sensitive_action_tokens: any[];
+  refresh_tokens: any[];
+  api_keys: any[];
+  security_alerts: any[];
 } = {
   users: [],
   farmer_profiles: [],
@@ -84,6 +87,9 @@ export const memoryStore: {
   oauth_states: [],
   active_sessions: [],
   sensitive_action_tokens: [],
+  refresh_tokens: [],
+  api_keys: [],
+  security_alerts: [],
 };
 
 export async function checkDbConnection(): Promise<boolean> {

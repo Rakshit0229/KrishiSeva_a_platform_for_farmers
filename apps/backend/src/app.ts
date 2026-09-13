@@ -23,7 +23,11 @@ import whatsappRoutes from './routes/whatsapp.routes';
 import chatRoutes from './routes/chat.routes';
 import innovationsRoutes from './routes/innovations.routes';
 import uploadRoutes from './routes/upload.routes';
+import monitoringRoutes from './routes/monitoring.routes';
 import { detectSqlInjection } from './middleware/validation';
+import { authRateLimiter, standardApiLimiter, intensiveApiLimiter } from './middleware/rateLimiter';
+import { csrfProtection, getCsrfTokenHandler } from './middleware/csrf';
+import { apiMonitoringMiddleware } from './services/monitoring.service';
 import { initDataRetentionSchedule, runDataRetentionCleanup } from './services/retention.service';
 import { validateEnvironmentSecrets } from './services/secrets.service';
 
@@ -53,40 +57,73 @@ app.use(cors({
   origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Weighbridge-Key', 'X-Sensitive-Action-Token'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Weighbridge-Key', 'X-Sensitive-Action-Token', 'X-CSRF-Token', 'X-API-Key'],
 }));
 app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// 8. API Monitoring & Intrusion Telemetry
+app.use(apiMonitoringMiddleware);
+
+// 5. API Versioning Headers & Content Protection
+app.use((_req, res, next) => {
+  res.setHeader('X-API-Version', '1.0.0');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  next();
+});
+
 // 3. Global SQL Injection Detection & Defense
 app.use(detectSqlInjection);
 
+// CSRF Token Generation endpoint (Public & Safe)
+app.get(['/api/csrf-token', '/api/v1/csrf-token'], getCsrfTokenHandler);
+
+// 7. CSRF Protection for state-changing operations
+app.use(csrfProtection);
+
+// ==========================================
+// 5. API VERSIONING HIERARCHY (/api/v1)
+// ==========================================
+const v1Router = express.Router();
+
 // Health Check
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', time: new Date().toISOString(), platform: 'KrishiSeva Vercel Deployment' });
+v1Router.get('/health', (_req, res) => {
+  res.json({
+    status: 'ok',
+    version: '1.0.0',
+    time: new Date().toISOString(),
+    platform: 'KrishiSeva National Procurement Engine'
+  });
 });
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/farmers', farmerRoutes);
-app.use('/api/centres', centreRoutes);
-app.use('/api/slots', slotRoutes);
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/queue', queueRoutes);
-app.use('/api/procurements', procurementRoutes);
-app.use('/api/weighbridge', weighbridgeRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/grievances', grievanceRoutes);
-app.use('/api/msp', mspRoutes);
-app.use('/api/voice', voiceRoutes);
-app.use('/api/whatsapp', whatsappRoutes);
-app.use('/api/chat', chatRoutes);
-app.use('/api/innovations', innovationsRoutes);
-app.use('/api/upload', uploadRoutes);
-app.use('/api', featureRoutes);
+// 2. API Rate Limiting: Tiered Protection
+v1Router.use('/auth', authRateLimiter, authRoutes);
+v1Router.use('/upload', intensiveApiLimiter, uploadRoutes);
+v1Router.use('/farmers', farmerRoutes);
+v1Router.use('/centres', centreRoutes);
+v1Router.use('/slots', slotRoutes);
+v1Router.use('/bookings', bookingRoutes);
+v1Router.use('/queue', queueRoutes);
+v1Router.use('/procurements', procurementRoutes);
+v1Router.use('/weighbridge', weighbridgeRoutes);
+v1Router.use('/payments', paymentRoutes);
+v1Router.use('/grievances', grievanceRoutes);
+v1Router.use('/msp', mspRoutes);
+v1Router.use('/voice', voiceRoutes);
+v1Router.use('/whatsapp', whatsappRoutes);
+v1Router.use('/chat', chatRoutes);
+v1Router.use('/innovations', innovationsRoutes);
+v1Router.use('/admin/security', monitoringRoutes);
+v1Router.use('/', featureRoutes);
 
-// 5. Proper Error Handling Middleware (No Sensitive Information Disclosure)
+// Mount /api/v1 as primary versioned API
+app.use('/api/v1', standardApiLimiter, v1Router);
+
+// Maintain 100% backward compatibility: alias /api to v1Router
+app.use('/api', standardApiLimiter, v1Router);
+
+// 4. Proper API Error Handling Middleware (No Sensitive Information Disclosure)
 app.use((err: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   const errorId = `err_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
@@ -95,6 +132,15 @@ app.use((err: any, req: express.Request, res: express.Response, _next: express.N
 
   const statusCode = typeof err.status === 'number' ? err.status : (typeof err.statusCode === 'number' ? err.statusCode : 500);
   const isProduction = process.env.NODE_ENV === 'production';
+
+  // Determine error code
+  let errorCode = err.code || 'INTERNAL_SERVER_ERROR';
+  if (statusCode === 400) errorCode = err.code || 'BAD_REQUEST';
+  if (statusCode === 401) errorCode = err.code || 'UNAUTHORIZED';
+  if (statusCode === 403) errorCode = err.code || 'FORBIDDEN';
+  if (statusCode === 404) errorCode = err.code || 'NOT_FOUND';
+  if (statusCode === 422) errorCode = err.code || 'VALIDATION_FAILED';
+  if (statusCode === 429) errorCode = err.code || 'RATE_LIMIT_EXCEEDED';
 
   // Sanitize message: never expose internal database errors, sql queries, or system paths
   let safeMessage = 'An unexpected internal error occurred. Please contact support with this Error ID.';
@@ -105,6 +151,7 @@ app.use((err: any, req: express.Request, res: express.Response, _next: express.N
 
   res.status(statusCode).json({
     error: safeMessage,
+    code: errorCode,
     error_id: errorId,
     status: statusCode,
     timestamp: new Date().toISOString(),
@@ -113,7 +160,7 @@ app.use((err: any, req: express.Request, res: express.Response, _next: express.N
 });
 
 // 4. Data Retention Trigger Endpoint (Admin / Compliance)
-app.post('/api/admin/retention/run', (_req, res) => {
+app.post(['/api/admin/retention/run', '/api/v1/admin/retention/run'], (_req, res) => {
   const report = runDataRetentionCleanup();
   res.json({ message: 'Data retention cleanup executed successfully', report });
 });

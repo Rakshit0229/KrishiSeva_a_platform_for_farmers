@@ -10,6 +10,13 @@ import {
   logAuditAction
 } from '../middleware/auth';
 import {
+  rotateRefreshToken,
+  revokeRefreshTokenFamily,
+  generateApiKey,
+  rotateApiKey,
+  listApiKeys
+} from '../services/keyRotation.service';
+import {
   validatePasswordPolicy,
   hashPassword,
   verifyPassword,
@@ -138,7 +145,7 @@ router.post('/verify-otp', async (req: Request, res: Response) => {
   }
 
   // Create tracked session with session fixation protection
-  const { token, sessionId } = createSession(
+  const { token, sessionId, refreshToken } = createSession(
     { id: user.id, phone: user.phone, name: user.name, role: user.role },
     req.ip || '127.0.0.1',
     req.get('user-agent') || 'browser'
@@ -151,6 +158,7 @@ router.post('/verify-otp', async (req: Request, res: Response) => {
 
   return res.json({
     token,
+    refreshToken,
     sessionId,
     user: {
       id: user.id,
@@ -825,4 +833,109 @@ router.post('/sessions/revoke-all', authMiddleware, (req: Request, res: Response
   });
 });
 
+// ==========================================
+// REFRESH TOKEN ROTATION (RTR) & API KEY ROTATION
+// ==========================================
+
+// POST /api/auth/refresh (Rotate refresh token & issue new access token)
+router.post('/refresh', async (req: Request, res: Response) => {
+  const { refreshToken } = req.body;
+  if (!refreshToken) {
+    return res.status(400).json({ error: 'refreshToken is required in request body', code: 'REFRESH_TOKEN_REQUIRED' });
+  }
+
+  const rotation = rotateRefreshToken(refreshToken);
+  if (!rotation.success || !rotation.userId) {
+    return res.status(rotation.code === 'TOKEN_REUSE_DETECTED' ? 403 : 401).json({
+      error: rotation.error,
+      code: rotation.code,
+      status: rotation.code === 'TOKEN_REUSE_DETECTED' ? 403 : 401,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  const user = memoryStore.users.find(u => u.id === rotation.userId);
+  if (!user || !user.is_active) {
+    return res.status(401).json({ error: 'User account inactive or not found', code: 'USER_INACTIVE' });
+  }
+
+  const session = createSession(
+    { id: user.id, phone: user.phone, name: user.name, role: user.role },
+    req.ip || '127.0.0.1',
+    req.get('user-agent') || 'token-refresh'
+  );
+
+  return res.json({
+    message: 'Tokens rotated successfully',
+    token: session.token,
+    refreshToken: rotation.newRefreshToken,
+    sessionId: session.sessionId,
+    user: {
+      id: user.id,
+      phone: user.phone,
+      name: user.name,
+      role: user.role,
+    },
+  });
+});
+
+// POST /api/auth/tokens/revoke (Revoke user token family)
+router.post('/tokens/revoke', authMiddleware, (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  revokeRefreshTokenFamily(userId);
+  return res.json({ message: 'All refresh tokens for user have been successfully revoked' });
+});
+
+// POST /api/auth/admin/keys/create (Generate Integration API Key)
+router.post('/admin/keys/create', authMiddleware, (req: Request, res: Response) => {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin authorization required' });
+  }
+
+  const { name, role = 'officer', expiryDays = 90 } = req.body;
+  if (!name) {
+    return res.status(400).json({ error: 'Key name is required' });
+  }
+
+  const { rawKey, keyRecord } = generateApiKey(name, role, Number(expiryDays));
+  return res.status(201).json({
+    message: 'API Key generated successfully. Save this secret now as it will not be displayed again.',
+    apiKey: rawKey,
+    record: keyRecord,
+  });
+});
+
+// POST /api/auth/admin/keys/:id/rotate (Rotate API Key with 24h grace period)
+router.post('/admin/keys/:id/rotate', authMiddleware, (req: Request, res: Response) => {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin authorization required' });
+  }
+
+  const { id } = req.params;
+  const graceHours = parseInt(req.body.gracePeriodHours) || 24;
+  const result = rotateApiKey(id, graceHours);
+
+  if (!result.success) {
+    return res.status(404).json({ error: result.error, code: 'KEY_NOT_FOUND' });
+  }
+
+  return res.json({
+    message: `API Key rotated successfully with a ${graceHours}-hour migration grace period.`,
+    newApiKey: result.newRawKey,
+    keyRecord: result.newKeyRecord,
+    gracePeriodHours: graceHours,
+  });
+});
+
+// GET /api/auth/admin/keys (List API Keys with Masked Secrets)
+router.get('/admin/keys', authMiddleware, (req: Request, res: Response) => {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin authorization required' });
+  }
+
+  const keys = listApiKeys();
+  return res.json({ keys, count: keys.length });
+});
+
 export default router;
+
