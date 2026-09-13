@@ -1,8 +1,9 @@
 const http = require('http');
 const path = require('path');
 
+const ROOT_DIR = process.cwd();
 // Load compiled backend app
-const { app } = require('c:/Users/Rakshit Mishra/Downloads/KrishiSeva AG/apps/backend/dist/app.js');
+const { app } = require(path.join(ROOT_DIR, 'apps/backend/dist/app.js'));
 
 let server;
 let baseUrl;

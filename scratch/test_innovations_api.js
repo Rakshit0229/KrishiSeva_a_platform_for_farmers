@@ -1,5 +1,5 @@
 const path = require('path');
-const workspaceRoot = 'c:/Users/Rakshit Mishra/Downloads/KrishiSeva AG';
+const workspaceRoot = process.cwd();
 const express = require(path.join(workspaceRoot, 'node_modules/express'));
 const jwt = require(path.join(workspaceRoot, 'node_modules/jsonwebtoken'));
 

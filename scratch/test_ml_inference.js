@@ -1,5 +1,5 @@
 const path = require('path');
-const workspaceRoot = 'c:/Users/Rakshit Mishra/Downloads/KrishiSeva AG';
+const workspaceRoot = process.cwd();
 
 // First compile backend to dist
 console.log('Testing ML Inference Engine...');
