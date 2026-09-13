@@ -13,6 +13,7 @@ const Landing = lazy(() => import('./pages/public/Landing'));
 const OTPLogin = lazy(() => import('./pages/public/OTPLogin'));
 const HelpCenter = lazy(() => import('./pages/public/HelpCenter'));
 const TokenDisplayBoard = lazy(() => import('./pages/public/TokenDisplayBoard'));
+const PrivacyPolicy = lazy(() => import('./pages/public/PrivacyPolicy'));
 
 // Farmer
 const FarmerDashboard = lazy(() => import('./pages/farmer/FarmerDashboard'));
@@ -110,6 +111,7 @@ function AppRoutes() {
           }
         />
         <Route path="/help" element={<HelpCenter />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
         {/* TV display board — no auth, full-screen kiosk */}
         <Route path="/display/:centreId" element={<TokenDisplayBoard />} />
 

@@ -1116,8 +1116,13 @@ export const Landing: React.FC = () => {
               Krishi Bhawan, New Delhi, 110001<br />
               Toll Free Helpline: 1800-180-1551
             </p>
-            <div className="pt-2 text-gray-500 text-[10px]">
-              © 2026 KrishiSeva Platform. All rights reserved.
+            <div className="pt-2 flex flex-col gap-1 text-[11px]">
+              <Link to="/privacy" className="text-gold hover:text-gold-light underline font-medium">
+                🛡️ DPDP Act Privacy Policy & Compliance Notice
+              </Link>
+              <span className="text-gray-500 text-[10px]">
+                © 2026 KrishiSeva Platform. All rights reserved.
+              </span>
             </div>
           </div>
         </div>

@@ -164,3 +164,30 @@ export function logAuditAction(actorId: string | undefined, actorRole: string | 
     created_at: new Date().toISOString(),
   });
 }
+
+/**
+ * 6. Data Access Logging (Auditing Access to Sensitive Information)
+ * Compliance with DPDP Act 2023: Records when personal or banking PII is viewed
+ */
+export function logDataAccess(
+  actorId: string | undefined,
+  actorRole: string | undefined,
+  resourceType: string,
+  resourceId: string,
+  purpose: string = 'FARMER_RECORD_VIEW',
+  ipAddress: string = '127.0.0.1'
+) {
+  memoryStore.audit_logs.unshift({
+    id: `access-log-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+    actor_id: actorId || null,
+    actor_role: actorRole || 'anonymous',
+    action: 'DATA_ACCESS_READ_PII',
+    entity_type: resourceType,
+    entity_id: resourceId,
+    old_value: null,
+    new_value: { purpose, access_type: 'PII_READ' },
+    ip_address: ipAddress,
+    created_at: new Date().toISOString(),
+  });
+}
+

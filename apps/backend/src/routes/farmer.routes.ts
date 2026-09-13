@@ -1,35 +1,66 @@
 import { Router, Request, Response } from 'express';
 import { memoryStore } from '../db';
-import { authMiddleware, requireRole, requireSensitiveActionVerification, logAuditAction } from '../middleware/auth';
+import { authMiddleware, requireRole, requireSensitiveActionVerification, logAuditAction, logDataAccess } from '../middleware/auth';
+import { validateFarmerProfileInput, validateParamId } from '../middleware/validation';
+import { encryptSensitiveData, maskAadhaar, maskBankAccount } from '../services/encryption.service';
 
 const router = Router();
 
-// GET /api/farmers/profile
+// GET /api/farmers/profile (With DPDP Data Access Logging & PII Masking)
 router.get('/profile', authMiddleware, requireRole('farmer', 'officer', 'admin'), (req: Request, res: Response) => {
   const userId = req.user!.id;
   const user = memoryStore.users.find(u => u.id === userId);
   const profile = memoryStore.farmer_profiles.find(p => p.user_id === userId);
 
+  // 6. Log Access to Sensitive Personal Information (Audit Trail)
+  logDataAccess(userId, req.user!.role, 'farmer_profiles', userId, 'PROFILE_VIEW', req.ip || '127.0.0.1');
+
+  // 3. Minimize Personal Data Collection & Mask Sensitive Output
+  const maskedProfile = profile ? {
+    ...profile,
+    masked_aadhaar: maskAadhaar(profile.aadhaar_last4),
+    masked_bank_account: maskBankAccount(profile.bank_account_last4),
+    // Strip raw encryption payloads from public JSON response
+    encrypted_bank_account: undefined,
+    encrypted_ifsc: undefined,
+  } : {
+    user_id: userId,
+    crop_types: [],
+    land_area_acres: 0,
+    village: '',
+    district: '',
+    state: '',
+    pincode: '',
+    bank_name: '',
+    bank_account_last4: '',
+    ifsc_code: '',
+    masked_aadhaar: 'XXXX-XXXX-XXXX',
+    masked_bank_account: 'XXXXXXXXXXXX',
+    profile_complete: false,
+  };
+
   return res.json({
     user,
-    profile: profile || {
-      user_id: userId,
-      crop_types: [],
-      land_area_acres: 0,
-      village: '',
-      district: '',
-      state: '',
-      pincode: '',
-      bank_name: '',
-      bank_account_last4: '',
-      ifsc_code: '',
-      profile_complete: false,
-    },
+    profile: maskedProfile,
   });
 });
 
-// PUT /api/farmers/profile
-router.put('/profile', authMiddleware, requireRole('farmer', 'officer', 'admin'), (req: Request, res: Response) => {
+// GET /api/farmers/access-logs (DPDP Act 2023: Farmer Data Principal Access Transparency)
+router.get('/access-logs', authMiddleware, (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const logs = memoryStore.audit_logs.filter(
+    (l) => (l.entity_id === userId || l.actor_id === userId) && l.action.startsWith('DATA_ACCESS')
+  ).slice(0, 50);
+
+  return res.json({
+    data_principal_id: userId,
+    compliance_framework: 'Digital Personal Data Protection (DPDP) Act 2023',
+    access_logs: logs,
+  });
+});
+
+// PUT /api/farmers/profile (Server-Side Format & Length Validated)
+router.put('/profile', authMiddleware, requireRole('farmer', 'officer', 'admin'), validateFarmerProfileInput, (req: Request, res: Response) => {
   const userId = req.user!.id;
   const {
     name,
@@ -73,6 +104,8 @@ router.put('/profile', authMiddleware, requireRole('farmer', 'officer', 'admin')
       bank_name: bank_name || profile.bank_name,
       bank_account_last4: bank_account_last4 || profile.bank_account_last4,
       ifsc_code: ifsc_code || profile.ifsc_code,
+      encrypted_bank_account: bank_account_last4 ? encryptSensitiveData(bank_account_last4) : profile.encrypted_bank_account,
+      encrypted_ifsc: ifsc_code ? encryptSensitiveData(ifsc_code) : profile.encrypted_ifsc,
       profile_complete: isComplete,
       updated_at: new Date().toISOString(),
     });
@@ -90,6 +123,8 @@ router.put('/profile', authMiddleware, requireRole('farmer', 'officer', 'admin')
       bank_name,
       bank_account_last4,
       ifsc_code,
+      encrypted_bank_account: bank_account_last4 ? encryptSensitiveData(bank_account_last4) : undefined,
+      encrypted_ifsc: ifsc_code ? encryptSensitiveData(ifsc_code) : undefined,
       profile_complete: isComplete,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -97,6 +132,7 @@ router.put('/profile', authMiddleware, requireRole('farmer', 'officer', 'admin')
     memoryStore.farmer_profiles.push(profile);
   }
 
+  logDataAccess(userId, req.user!.role, 'farmer_profiles', userId, 'PROFILE_UPDATE_SENSITIVE', req.ip || '127.0.0.1');
   logAuditAction(userId, req.user!.role, 'FARMER_PROFILE_UPDATED', 'farmer_profiles', profile.id, oldProfile, profile);
 
   return res.json({ message: 'Profile updated successfully', profile });
@@ -203,8 +239,8 @@ export const farmerFlags: Array<{
   },
 ];
 
-// POST /api/farmers/:id/flag (Officer/Admin issues warning or flag)
-router.post('/:id/flag', authMiddleware, requireRole('officer', 'admin'), (req: Request, res: Response) => {
+// POST /api/farmers/:id/flag (Officer/Admin issues warning or flag - Validated URL Param)
+router.post('/:id/flag', authMiddleware, requireRole('officer', 'admin'), validateParamId('id'), (req: Request, res: Response) => {
   const { reason, details, severity = 'warning' } = req.body;
   const farmerId = req.params.id;
 
@@ -225,8 +261,8 @@ router.post('/:id/flag', authMiddleware, requireRole('officer', 'admin'), (req: 
   return res.status(201).json({ message: 'Compliance flag issued successfully', flag });
 });
 
-// GET /api/farmers/:id/flags (Fetch flags for a farmer)
-router.get('/:id/flags', authMiddleware, (req: Request, res: Response) => {
+// GET /api/farmers/:id/flags (Fetch flags for a farmer - Validated URL Param)
+router.get('/:id/flags', authMiddleware, validateParamId('id'), (req: Request, res: Response) => {
   const flags = farmerFlags.filter(f => f.farmer_id === req.params.id && f.is_active);
   return res.json(flags);
 });

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { memoryStore } from '../db';
 import { authMiddleware, requireRole, logAuditAction } from '../middleware/auth';
+import { validateGrievanceInput, validateParamId } from '../middleware/validation';
 
 const router = Router();
 
@@ -18,8 +19,8 @@ router.get('/stats', authMiddleware, (_req: Request, res: Response) => {
   return res.json({ open, in_review, escalated, resolved, overdue, total: all.length });
 });
 
-// POST /api/grievances
-router.post('/', authMiddleware, requireRole('farmer', 'officer', 'admin'), (req: Request, res: Response) => {
+// POST /api/grievances (With Server-Side Length & Category Validation)
+router.post('/', authMiddleware, requireRole('farmer', 'officer', 'admin'), validateGrievanceInput, (req: Request, res: Response) => {
   const farmerId = req.user!.id;
   const { category, subject, description, booking_id, centre_id, priority = 'medium' } = req.body;
 
@@ -81,8 +82,8 @@ router.get('/', authMiddleware, (req: Request, res: Response) => {
   return res.json(enhanced);
 });
 
-// GET /api/grievances/:id
-router.get('/:id', authMiddleware, (req: Request, res: Response) => {
+// GET /api/grievances/:id (URL Parameter Validated)
+router.get('/:id', authMiddleware, validateParamId('id'), (req: Request, res: Response) => {
   const grievance = memoryStore.grievances.find(g => g.id === req.params.id);
   if (!grievance) {
     return res.status(404).json({ error: 'Grievance not found' });
@@ -100,8 +101,8 @@ router.get('/:id', authMiddleware, (req: Request, res: Response) => {
   });
 });
 
-// PUT /api/grievances/:id/update
-router.put('/:id/update', authMiddleware, requireRole('officer', 'admin'), (req: Request, res: Response) => {
+// PUT /api/grievances/:id/update (URL Parameter Validated)
+router.put('/:id/update', authMiddleware, requireRole('officer', 'admin'), validateParamId('id'), (req: Request, res: Response) => {
   const grievance = memoryStore.grievances.find(g => g.id === req.params.id);
   if (!grievance) {
     return res.status(404).json({ error: 'Grievance not found' });

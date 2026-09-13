@@ -3,11 +3,12 @@ import QRCode from 'qrcode';
 import { memoryStore, withTransaction } from '../db';
 import { authMiddleware, requireRole, logAuditAction } from '../middleware/auth';
 import { publishQueueEvent } from '../services/redis';
+import { validateBookingInput, validateParamId } from '../middleware/validation';
 
 const router = Router();
 
-// POST /api/bookings (SELECT FOR UPDATE semantics)
-router.post('/', authMiddleware, requireRole('farmer', 'officer', 'admin'), async (req: Request, res: Response) => {
+// POST /api/bookings (SELECT FOR UPDATE semantics with Server-Side Validation)
+router.post('/', authMiddleware, requireRole('farmer', 'officer', 'admin'), validateBookingInput, async (req: Request, res: Response) => {
   const farmerId = req.user!.id; // NEVER trust client-provided farmer_id
   const { slot_id, centre_id, crop_type, expected_quantity_kg, notes } = req.body;
 
@@ -161,8 +162,8 @@ router.get('/', authMiddleware, (req: Request, res: Response) => {
   return res.json(enhanced);
 });
 
-// GET /api/bookings/:id
-router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
+// GET /api/bookings/:id (Validated URL parameter)
+router.get('/:id', authMiddleware, validateParamId('id'), async (req: Request, res: Response) => {
   const booking = memoryStore.bookings.find(b => b.id === req.params.id);
   if (!booking) {
     return res.status(404).json({ error: 'Booking not found' });
@@ -188,8 +189,8 @@ router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
   });
 });
 
-// DELETE /api/bookings/:id (Cancel booking)
-router.delete('/:id', authMiddleware, (req: Request, res: Response) => {
+// DELETE /api/bookings/:id (Cancel booking with validated parameter)
+router.delete('/:id', authMiddleware, validateParamId('id'), (req: Request, res: Response) => {
   const booking = memoryStore.bookings.find(b => b.id === req.params.id);
   if (!booking) {
     return res.status(404).json({ error: 'Booking not found' });

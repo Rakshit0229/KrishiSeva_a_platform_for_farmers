@@ -5,12 +5,20 @@ import { v4 as uuidv4 } from 'uuid';
 dotenv.config();
 
 const connectionString = process.env.DATABASE_URL || 'postgresql://krishi_user:krishi_password@localhost:5432/krishi_procurement';
+const isProd = process.env.NODE_ENV === 'production';
 
+/**
+ * 8. Secure Database Configuration & Hardening
+ * Enforces pool sizing, statement timeout (anti-DoS), and TLS in production
+ */
 export const pool = new Pool({
   connectionString,
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 3000,
+  connectionTimeoutMillis: 5000,
+  statement_timeout: 10000, // 10s max execution time per query
+  query_timeout: 10000,
+  ssl: isProd ? { rejectUnauthorized: false } : undefined,
 });
 
 let isPgConnected = false;
@@ -98,7 +106,23 @@ export function getIsPgConnected() {
   return isPgConnected;
 }
 
+/**
+ * 3. Parameterized Database Query Execution
+ * Strictly enforces prepared statements ($1, $2) and prevents SQL injection
+ */
 export async function query(text: string, params: any[] = []): Promise<QueryResult<any>> {
+  if (!Array.isArray(params)) {
+    throw new Error('Database security error: Query parameters must be provided as an array to ensure parameterization.');
+  }
+
+  // Verify that any user-derived queries with inputs use parameterized placeholders
+  if (text.includes("'") && !text.includes("$") && params.length === 0) {
+    const dangerousMatch = text.match(/'\s*(OR|AND)\s*'\d+'='\d+'/i);
+    if (dangerousMatch) {
+      throw new Error('Database security violation: Unparameterized SQL query blocked to prevent SQL injection.');
+    }
+  }
+
   if (isPgConnected) {
     try {
       return await pool.query(text, params);

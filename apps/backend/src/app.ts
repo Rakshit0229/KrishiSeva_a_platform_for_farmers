@@ -22,15 +22,33 @@ import voiceRoutes from './routes/voice.routes';
 import whatsappRoutes from './routes/whatsapp.routes';
 import chatRoutes from './routes/chat.routes';
 import innovationsRoutes from './routes/innovations.routes';
+import uploadRoutes from './routes/upload.routes';
+import { detectSqlInjection } from './middleware/validation';
+import { initDataRetentionSchedule, runDataRetentionCleanup } from './services/retention.service';
+import { validateEnvironmentSecrets } from './services/secrets.service';
 
 dotenv.config();
 
 export const app = express();
 
-// Security & Parsing Middleware
+// 2. HTTPS/TLS Enforcement: Strict-Transport-Security (HSTS)
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: 'cross-origin' }
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  hsts: {
+    maxAge: 31536000, // 1 year
+    includeSubDomains: true,
+    preload: true,
+  },
 }));
+
+// 2. Enforce HTTPS in production via reverse proxy headers
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production' && req.headers['x-forwarded-proto'] && req.headers['x-forwarded-proto'] !== 'https') {
+    return res.redirect(301, `https://${req.headers.host}${req.url}`);
+  }
+  next();
+});
+
 app.use(cors({
   origin: true,
   credentials: true,
@@ -38,8 +56,11 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Weighbridge-Key', 'X-Sensitive-Action-Token'],
 }));
 app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// 3. Global SQL Injection Detection & Defense
+app.use(detectSqlInjection);
 
 // Health Check
 app.get('/api/health', (_req, res) => {
@@ -62,19 +83,48 @@ app.use('/api/voice', voiceRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/innovations', innovationsRoutes);
+app.use('/api/upload', uploadRoutes);
 app.use('/api', featureRoutes);
 
-// Error Handling Middleware
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error('Unhandled Server Error:', err);
-  res.status(500).json({ error: err.message || 'Internal Server Error' });
+// 5. Proper Error Handling Middleware (No Sensitive Information Disclosure)
+app.use((err: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  const errorId = `err_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+  // Log full error details and stack trace securely on the server
+  console.error(`[CRITICAL ERROR ${errorId}] URL: ${req.method} ${req.originalUrl}:`, err);
+
+  const statusCode = typeof err.status === 'number' ? err.status : (typeof err.statusCode === 'number' ? err.statusCode : 500);
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  // Sanitize message: never expose internal database errors, sql queries, or system paths
+  let safeMessage = 'An unexpected internal error occurred. Please contact support with this Error ID.';
+  if (statusCode < 500 && typeof err.message === 'string') {
+    // Strip any raw paths or passwords from client message
+    safeMessage = err.message.replace(/([A-Z]:\\[^\s]+|\/[^\s]+)/g, '[path]');
+  }
+
+  res.status(statusCode).json({
+    error: safeMessage,
+    error_id: errorId,
+    status: statusCode,
+    timestamp: new Date().toISOString(),
+    ...(isProduction ? {} : { debug_hint: err.message }),
+  });
+});
+
+// 4. Data Retention Trigger Endpoint (Admin / Compliance)
+app.post('/api/admin/retention/run', (_req, res) => {
+  const report = runDataRetentionCleanup();
+  res.json({ message: 'Data retention cleanup executed successfully', report });
 });
 
 let isInitialized = false;
 export async function initializeBackend() {
   if (!isInitialized) {
+    validateEnvironmentSecrets();
     await checkDbConnection();
     await seedDatabase();
+    initDataRetentionSchedule();
     isInitialized = true;
   }
 }
