@@ -5,6 +5,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Input } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
 import { apiClient } from '../../api/client';
+import { sanitizeText } from '../../utils/sanitize';
 import toast from 'react-hot-toast';
 
 export const FarmerGrievances: React.FC = () => {
@@ -32,14 +33,17 @@ export const FarmerGrievances: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!subject || !description) {
+    const cleanSubject = sanitizeText(subject);
+    const cleanDescription = sanitizeText(description);
+
+    if (!cleanSubject || !cleanDescription) {
       toast.error('Please enter subject and description');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await apiClient.post('/grievances', { category, subject, description });
+      await apiClient.post('/grievances', { category, subject: cleanSubject, description: cleanDescription });
       toast.success('Grievance registered with 72-Hour Government SLA!');
       setIsNewModalOpen(false);
       setSubject('');
@@ -97,7 +101,7 @@ export const FarmerGrievances: React.FC = () => {
                       <Badge status={g.status}>{g.status}</Badge>
                     </div>
                     <h3 className="font-heading text-lg font-bold text-text-primary dark:text-white">
-                      {g.subject}
+                      {sanitizeText(g.subject)}
                     </h3>
                     <p className="text-xs text-text-muted">
                       Filed: {new Date(g.created_at).toLocaleDateString()} · SLA Deadline: {new Date(g.sla_deadline).toLocaleDateString()}
@@ -119,7 +123,7 @@ export const FarmerGrievances: React.FC = () => {
                     <div>
                       <span className="text-text-muted font-bold block mb-1">Description:</span>
                       <p className="text-text-primary dark:text-gray-200 text-sm leading-relaxed">
-                        {g.description}
+                        {sanitizeText(g.description)}
                       </p>
                     </div>
                     <div className="pt-3 border-t border-farmborder/40 flex items-center justify-between text-text-muted">

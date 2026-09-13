@@ -22,6 +22,23 @@ interface AuthState {
 
 const STORAGE_KEY = 'krishiseva-auth';
 
+/**
+ * Strips sensitive PII (Aadhaar, bank account numbers, passwords, full biometric/demographic profile)
+ * before persisting to localStorage.
+ */
+export function sanitizeUserForStorage(user: User | null): Partial<User> | null {
+  if (!user) return null;
+  return {
+    id: user.id,
+    name: user.name,
+    role: user.role,
+    // Masked phone if present for display purposes
+    phone: user.phone ? user.phone.replace(/(\d{6})\d{4}/, '$1****') : '',
+    mfa_enabled: user.mfa_enabled,
+    has_password: user.has_password,
+  };
+}
+
 function getInitialState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -43,7 +60,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   ...getInitialState(),
 
   login: (user, token) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ user, token }));
+    // Security: Only persist minimal, non-sensitive public metadata to localStorage
+    const storageUser = sanitizeUserForStorage(user);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ user: storageUser, token }));
+    // In-memory state retains active session user object
     set({ user, token, isAuthenticated: true });
   },
 
@@ -74,8 +94,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     set((state) => {
       if (!state.user) return state;
       const newUser = { ...state.user, ...updated };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ user: newUser, token: state.token }));
+      const storageUser = sanitizeUserForStorage(newUser);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ user: storageUser, token: state.token }));
       return { user: newUser };
     });
   },
 }));
+

@@ -37,9 +37,21 @@ dotenv.config();
 
 export const app = express();
 
-// 2. HTTPS/TLS Enforcement: Strict-Transport-Security (HSTS)
+// 1. Content Security Policy (CSP) & Transport Security
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://unpkg.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+      imgSrc: ["'self'", "data:", "blob:", "https://*.tile.openstreetmap.org", "https://images.unsplash.com"],
+      connectSrc: ["'self'", "http://localhost:*", "ws://localhost:*", "https:", "wss:"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+    },
+  },
   hsts: {
     maxAge: 31536000, // 1 year
     includeSubDomains: true,
@@ -55,10 +67,56 @@ app.use((req, res, next) => {
   next();
 });
 
+// 4. CORS Whitelist Policy: Restrict origins that can access API resources
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((s) => s.trim().toLowerCase())
+  .filter(Boolean);
+
+export function isOriginAllowed(origin: string | undefined): boolean {
+  if (!origin) return true; // Server-to-server or curl requests
+  
+  // In development, permit localhost and loopback origins
+  if (process.env.NODE_ENV !== 'production') {
+    if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+      return true;
+    }
+  }
+
+  const normalized = origin.toLowerCase();
+  if (allowedOrigins.includes(normalized)) {
+    return true;
+  }
+
+  // Trusted Indian government portal domains
+  try {
+    const parsed = new URL(origin);
+    const host = parsed.hostname.toLowerCase();
+    if (
+      host === 'krishiseva.gov.in' ||
+      host.endsWith('.krishiseva.gov.in') ||
+      host.endsWith('.gov.in') ||
+      host.endsWith('.nic.in')
+    ) {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+
+  return false;
+}
+
 app.use(cors({
-  origin: true,
+  origin: (origin, callback) => {
+    if (isOriginAllowed(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS policy violation: Origin '${origin}' is not authorized to access this resource`));
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Weighbridge-Key', 'X-Sensitive-Action-Token', 'X-CSRF-Token', 'X-API-Key'],
 }));
 app.use(cookieParser());
