@@ -11,7 +11,10 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "Asia/Kolkata"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     labels:
       - "security"
       - "dependencies"
@@ -26,7 +29,10 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "Asia/Kolkata"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     labels:
       - "backend"
       - "security"
@@ -42,7 +48,10 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "Asia/Kolkata"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     labels:
       - "frontend"
       - "security"
