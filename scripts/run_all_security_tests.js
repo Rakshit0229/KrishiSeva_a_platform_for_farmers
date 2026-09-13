@@ -11,7 +11,7 @@ const ROOT_DIR = process.cwd();
 
 console.log('===============================================================');
 console.log('    KRISHISEVA UNIFIED ENTERPRISE SECURITY MASTER TEST RUNNER  ');
-console.log('    Sections 1 to 8 Full Compliance & Automated Verification   ');
+console.log('    Sections 1 to 11 Full Compliance & Automated Verification  ');
 console.log('===============================================================\n');
 
 const SUITES = [
@@ -92,7 +92,7 @@ for (const suite of SUITES) {
 }
 
 console.log('\n===============================================================');
-console.log('       KRISHISEVA SECURITY COMPLIANCE SCORECARD (SECTIONS 1-8)  ');
+console.log('      KRISHISEVA SECURITY COMPLIANCE SCORECARD (SECTIONS 1-11) ');
 console.log('===============================================================');
 
 results.forEach((r, idx) => {
@@ -102,7 +102,7 @@ results.forEach((r, idx) => {
 
 console.log('===============================================================');
 if (allPassed) {
-  console.log('  🎉 100% SECURITY COMPLIANCE ACHIEVED ACROSS ALL 8 SECTIONS!');
+  console.log('  🎉 100% SECURITY COMPLIANCE ACHIEVED ACROSS ALL 11 SECTIONS!');
   console.log('  Enterprise Grade A+ Security Posture Confirmed.');
   console.log('===============================================================\n');
   process.exit(0);

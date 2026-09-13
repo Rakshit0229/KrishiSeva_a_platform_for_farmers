@@ -134,7 +134,7 @@ async function runTestSuite() {
     assert(validSelect.isValid === true, 'Allows authorized parameterized read-only SELECT queries on whitelisted tables');
 
     const dangerousDrop = aiSecurity.validateAiGeneratedQuery('DROP TABLE users;');
-    assert(dangerousDrop.isValid === false && dangerousDrop.violationReason.includes('Dangerous keyword') || dangerousDrop.violationReason.includes('read-only'), 'Blocks AI-generated DROP statements');
+    assert(dangerousDrop.isValid === false && (dangerousDrop.violationReason.includes('Dangerous keyword') || dangerousDrop.violationReason.includes('read-only')), 'Blocks AI-generated DROP statements');
 
     const injectionAttempt = aiSecurity.validateAiGeneratedQuery('SELECT * FROM msp_rates; DELETE FROM users; --');
     assert(injectionAttempt.isValid === false, 'Blocks multi-statement SQL injection from AI query generation');
