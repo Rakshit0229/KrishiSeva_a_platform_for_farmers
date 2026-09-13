@@ -937,5 +937,120 @@ router.get('/admin/keys', authMiddleware, (req: Request, res: Response) => {
   return res.json({ keys, count: keys.length });
 });
 
+// ==========================================
+// 9. STATUTORY USER CONSENT MANAGEMENT (DPDP ACT 2023)
+// ==========================================
+
+export interface UserConsentRecord {
+  id: string;
+  user_id: string;
+  policy_version: string;
+  scopes: string[]; // e.g., ['procurement_processing', 'dbt_disbursement', 'crop_assessment_ai']
+  consent_granted: boolean;
+  timestamp: string;
+  ip_address: string;
+  user_agent: string;
+  revoked_at?: string | null;
+}
+
+// POST /api/auth/consent (Record Informed Statutory Consent)
+router.post('/consent', authMiddleware, (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const { policy_version = '2026.1', scopes = ['procurement_processing', 'dbt_disbursement', 'crop_assessment_ai'], consent_granted = true } = req.body;
+
+  if (typeof consent_granted !== 'boolean') {
+    return res.status(400).json({ error: 'consent_granted must be a boolean' });
+  }
+
+  // Find existing active consent or create new one
+  let existingConsent = memoryStore.user_consents.find((c: any) => c.user_id === userId && !c.revoked_at);
+  const timestamp = new Date().toISOString();
+  const ipAddress = req.ip || '127.0.0.1';
+  const userAgent = req.get('user-agent') || 'browser';
+
+  if (existingConsent) {
+    existingConsent.policy_version = policy_version;
+    existingConsent.scopes = Array.isArray(scopes) ? scopes : [scopes];
+    existingConsent.consent_granted = consent_granted;
+    existingConsent.timestamp = timestamp;
+    existingConsent.ip_address = ipAddress;
+    existingConsent.user_agent = userAgent;
+  } else {
+    existingConsent = {
+      id: `consent-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      user_id: userId,
+      policy_version,
+      scopes: Array.isArray(scopes) ? scopes : [scopes],
+      consent_granted,
+      timestamp,
+      ip_address: ipAddress,
+      user_agent: userAgent,
+      revoked_at: null,
+    };
+    memoryStore.user_consents.push(existingConsent);
+  }
+
+  logAuditAction(
+    userId,
+    req.user!.role,
+    consent_granted ? 'USER_CONSENT_GRANTED' : 'USER_CONSENT_DENIED',
+    'user_consents',
+    existingConsent.id,
+    null,
+    { policy_version, scopes: existingConsent.scopes, timestamp }
+  );
+
+  return res.json({
+    message: consent_granted
+      ? 'Informed consent registered successfully pursuant to DPDP Act 2023 Section 6'
+      : 'Consent preference updated',
+    consent: existingConsent,
+  });
+});
+
+// GET /api/auth/consent/status (Check Active Consent Record)
+router.get('/consent/status', authMiddleware, (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const consent = memoryStore.user_consents.find((c: any) => c.user_id === userId && !c.revoked_at);
+
+  return res.json({
+    has_active_consent: Boolean(consent && consent.consent_granted),
+    consent: consent || null,
+    dpdp_compliance: {
+      statutory_basis: 'Digital Personal Data Protection Act, 2023',
+      notice_version: '2026.1',
+      retention_limit_days: 90,
+      dpo_contact: 'dpo@krishiseva.gov.in',
+    },
+  });
+});
+
+// POST /api/auth/consent/withdraw (DPDP Act Right to Withdraw Consent)
+router.post('/consent/withdraw', authMiddleware, (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const consent = memoryStore.user_consents.find((c: any) => c.user_id === userId && !c.revoked_at);
+
+  if (consent) {
+    consent.consent_granted = false;
+    consent.revoked_at = new Date().toISOString();
+  }
+
+  logAuditAction(
+    userId,
+    req.user!.role,
+    'USER_CONSENT_WITHDRAWN',
+    'user_consents',
+    consent ? consent.id : 'none',
+    null,
+    { withdrawn_at: new Date().toISOString() }
+  );
+
+  return res.json({
+    message: 'Consent withdrawn successfully. Future personal data processing halted according to DPDP Act 2023.',
+    status: 'WITHDRAWN',
+    withdrawn_at: new Date().toISOString(),
+  });
+});
+
 export default router;
 

@@ -48,7 +48,7 @@ jobs:
       - name: Dynamic Application Security Testing (DAST)
         run: node scripts/dast_scanner.js
 
-      - name: Run Unified Enterprise Security Master Test Suite (Sections 1-8)
+      - name: Run Unified Enterprise Security Master Test Suite (Sections 1-11)
         run: |
-          # Master runner orchestrating test_security_suite.js, test_privacy_security_suite.js, test_api_security_suite.js, test_infra_security_suite.js, test_frontend_security_suite.js, test_owasp_top10_suite.js
+          # Master runner orchestrating all test suites across Sections 1 to 11
           node scripts/run_all_security_tests.js

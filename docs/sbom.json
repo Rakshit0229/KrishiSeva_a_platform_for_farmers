@@ -1,10 +1,10 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
-  "serialNumber": "urn:uuid:krishiseva-sbom-1789322076525",
+  "serialNumber": "urn:uuid:krishiseva-sbom-1789325778545",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-09-13T17:54:36.525Z",
+    "timestamp": "2026-09-13T18:56:18.545Z",
     "component": {
       "type": "application",
       "name": "KrishiSeva Platform",

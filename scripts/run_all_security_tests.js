@@ -63,6 +63,14 @@ const SUITES = [
     name: 'Section 8: Comprehensive OWASP Top 10 Suite',
     command: 'node scratch/test_owasp_top10_suite.js',
   },
+  {
+    name: 'Section 10: Git Pre-Commit Secret Scanner Hook',
+    command: 'node scripts/git_pre_commit_secret_hook.js',
+  },
+  {
+    name: 'Section 9, 10, 11: Compliance, Vault Secrets & AI Security',
+    command: 'node scratch/test_compliance_secrets_ai_suite.js',
+  },
 ];
 
 const results = [];

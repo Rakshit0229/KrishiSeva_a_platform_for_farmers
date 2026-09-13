@@ -36,6 +36,7 @@ import { validateEnvironmentSecrets } from './services/secrets.service';
 dotenv.config();
 
 export const app = express();
+app.disable('x-powered-by');
 
 // 1. Content Security Policy (CSP) & Transport Security
 app.use(helmet({
