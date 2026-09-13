@@ -1,0 +1,40 @@
+name: Security & Infrastructure CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  security-audit:
+    name: Security & IaC Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Infrastructure as Code (IaC) Security Scan
+        run: node scripts/validate_iac_security.js
+
+      - name: Build Backend & Frontend
+        run: |
+          npm run build --workspace=apps/backend
+          npm run build --workspace=apps/frontend
+
+      - name: Run Enterprise Security Verification Suites
+        run: |
+          node scratch/test_security_suite.js
+          node scratch/test_privacy_security_suite.js
+          node scratch/test_api_security_suite.js
+          node scratch/test_infra_security_suite.js

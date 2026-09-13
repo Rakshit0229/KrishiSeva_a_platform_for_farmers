@@ -24,6 +24,8 @@ import chatRoutes from './routes/chat.routes';
 import innovationsRoutes from './routes/innovations.routes';
 import uploadRoutes from './routes/upload.routes';
 import monitoringRoutes from './routes/monitoring.routes';
+import infraRoutes from './routes/infra.routes';
+import { ipFirewall } from './middleware/firewall';
 import { detectSqlInjection } from './middleware/validation';
 import { authRateLimiter, standardApiLimiter, intensiveApiLimiter } from './middleware/rateLimiter';
 import { csrfProtection, getCsrfTokenHandler } from './middleware/csrf';
@@ -62,6 +64,9 @@ app.use(cors({
 app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// 1. Network Security Controls & IP Firewall
+app.use(ipFirewall);
 
 // 8. API Monitoring & Intrusion Telemetry
 app.use(apiMonitoringMiddleware);
@@ -115,6 +120,7 @@ v1Router.use('/whatsapp', whatsappRoutes);
 v1Router.use('/chat', chatRoutes);
 v1Router.use('/innovations', innovationsRoutes);
 v1Router.use('/admin/security', monitoringRoutes);
+v1Router.use('/admin/infra', infraRoutes);
 v1Router.use('/', featureRoutes);
 
 // Mount /api/v1 as primary versioned API
