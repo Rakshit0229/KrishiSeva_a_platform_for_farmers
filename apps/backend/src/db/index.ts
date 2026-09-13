@@ -4,8 +4,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 dotenv.config();
 
-const connectionString = process.env.DATABASE_URL || 'postgresql://krishi_user:krishi_password@localhost:5432/krishi_procurement';
 const isProd = process.env.NODE_ENV === 'production';
+const connectionString = process.env.DATABASE_URL || (isProd ? '' : 'postgresql://postgres:postgres@localhost:5432/krishi_procurement');
 
 /**
  * 8. Secure Database Configuration & Hardening

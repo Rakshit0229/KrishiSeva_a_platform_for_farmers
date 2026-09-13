@@ -27,14 +27,27 @@ jobs:
       - name: Infrastructure as Code (IaC) Security Scan
         run: node scripts/validate_iac_security.js
 
+      - name: Dependency & Supply Chain Vulnerability Scan
+        run: node scripts/scan_dependencies.js
+
+      - name: Software Bill of Materials (SBOM) Verification
+        run: node scripts/generate_sbom.js
+
+      - name: Static Application Security Testing (SAST)
+        run: node scripts/sast_scanner.js
+
+      - name: Secret Leak & Exposed Credential Scan
+        run: node scripts/scan_secrets.js
+
       - name: Build Backend & Frontend
         run: |
           npm run build --workspace=apps/backend
           npm run build --workspace=apps/frontend
 
-      - name: Run Enterprise Security Verification Suites
+      - name: Dynamic Application Security Testing (DAST)
+        run: node scripts/dast_scanner.js
+
+      - name: Run Unified Enterprise Security Master Test Suite (Sections 1-8)
         run: |
-          node scratch/test_security_suite.js
-          node scratch/test_privacy_security_suite.js
-          node scratch/test_api_security_suite.js
-          node scratch/test_infra_security_suite.js
+          # Master runner orchestrating test_security_suite.js, test_privacy_security_suite.js, test_api_security_suite.js, test_infra_security_suite.js, test_frontend_security_suite.js, test_owasp_top10_suite.js
+          node scripts/run_all_security_tests.js

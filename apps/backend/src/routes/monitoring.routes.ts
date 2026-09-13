@@ -31,4 +31,17 @@ router.post('/alerts/:id/resolve', authMiddleware, requireRole('admin'), (req: R
   return res.json({ message: 'Security alert marked as resolved', alert_id: id });
 });
 
+import { rotateEmergencySecrets } from '../services/secrets.service';
+
+// POST /api/v1/admin/security/rotate-secrets (Emergency Secret Rotation)
+router.post('/rotate-secrets', authMiddleware, requireRole('admin'), (req: Request, res: Response) => {
+  const { reason } = req.body;
+  if (!reason || typeof reason !== 'string') {
+    return res.status(400).json({ error: 'Reason is required for emergency secret rotation', code: 'REASON_REQUIRED' });
+  }
+
+  const result = rotateEmergencySecrets(reason, req.user?.id);
+  return res.json(result);
+});
+
 export default router;

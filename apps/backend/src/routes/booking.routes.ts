@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import crypto from 'crypto';
 import QRCode from 'qrcode';
 import { memoryStore, withTransaction } from '../db';
 import { authMiddleware, requireRole, logAuditAction } from '../middleware/auth';
@@ -51,7 +52,7 @@ router.post('/', authMiddleware, requireRole('farmer', 'officer', 'admin'), vali
         ? Math.max(...existingForDay.map(q => q.token_number)) + 1 
         : 45;
 
-      const qrToken = `QR-KS-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      const qrToken = `QR-KS-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
       
       const booking = {
         id: `booking-${Date.now()}`,

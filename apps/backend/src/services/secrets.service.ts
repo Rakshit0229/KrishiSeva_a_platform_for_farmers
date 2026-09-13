@@ -71,3 +71,63 @@ export function validateEnvironmentSecrets(): { isValid: boolean; warnings: stri
 
   return { isValid: warnings.length === 0, warnings };
 }
+
+import crypto from 'crypto';
+import { memoryStore } from '../db';
+import { logAuditAction } from '../middleware/auth';
+
+export interface EmergencyRotationResult {
+  success: boolean;
+  rotatedAt: string;
+  reason: string;
+  newSecretVersion: string;
+  revokedSessionsCount: number;
+}
+
+// Runtime secret storage allowing live rotation
+let activeRuntimeJwtSecret: string | null = null;
+let activeSecretVersion: number = 1;
+
+export function getActiveJwtSecret(): string {
+  return activeRuntimeJwtSecret || process.env.JWT_SECRET || 'krishiseva-enterprise-jwt-secret-secure-2026';
+}
+
+/**
+ * 8. Rotate Exposed Secrets:
+ * If an API key or signing secret is accidentally exposed, immediately rotate
+ * the secret, invalidate all existing sessions, and record an immutable audit alert.
+ */
+export function rotateEmergencySecrets(reason: string, adminUserId?: string): EmergencyRotationResult {
+  const newSecret = crypto.randomBytes(32).toString('hex');
+  activeRuntimeJwtSecret = newSecret;
+  activeSecretVersion += 1;
+
+  // Invalidate all active user sessions across the cluster
+  const revokedCount = memoryStore.active_sessions ? memoryStore.active_sessions.length : 0;
+  memoryStore.active_sessions = [];
+
+  const timestamp = new Date().toISOString();
+  const versionTag = `v${activeSecretVersion}-${Date.now().toString(36)}`;
+
+  // Record critical audit log
+  logAuditAction(
+    adminUserId || 'SYSTEM_EMERGENCY',
+    'admin',
+    'EMERGENCY_SECRET_ROTATION',
+    'secrets',
+    versionTag,
+    null,
+    { reason, revokedSessionsCount: revokedCount, timestamp }
+  );
+
+  console.warn(`🚨 [EMERGENCY PROTOCOL] Secrets rotated immediately! Reason: "${reason}". Revoked ${revokedCount} active sessions. Active secret version: ${versionTag}`);
+
+  return {
+    success: true,
+    rotatedAt: timestamp,
+    reason,
+    newSecretVersion: versionTag,
+    revokedSessionsCount: revokedCount,
+  };
+}
+

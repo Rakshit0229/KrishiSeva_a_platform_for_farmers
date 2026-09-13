@@ -1,0 +1,62 @@
+# KrishiSeva Enterprise Dependabot Configuration
+# Section 7: Supply Chain Security & Automated Package Updates
+
+version: 2
+updates:
+  # Maintain dependencies for root npm workspace
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 10
+    labels:
+      - "security"
+      - "dependencies"
+    commit-message:
+      prefix: "chore(deps)"
+
+  # Maintain dependencies for backend workspace
+  - package-ecosystem: "npm"
+    directory: "/apps/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 10
+    labels:
+      - "backend"
+      - "security"
+      - "dependencies"
+    commit-message:
+      prefix: "chore(backend-deps)"
+
+  # Maintain dependencies for frontend workspace
+  - package-ecosystem: "npm"
+    directory: "/apps/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 10
+    labels:
+      - "frontend"
+      - "security"
+      - "dependencies"
+    commit-message:
+      prefix: "chore(frontend-deps)"
+
+  # Maintain GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "ci/cd"
+      - "security"
+    commit-message:
+      prefix: "ci(actions)"

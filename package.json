@@ -10,7 +10,13 @@
     "dev:backend": "npm run dev --workspace=apps/backend",
     "dev:frontend": "npm run dev --workspace=apps/frontend",
     "build": "npm run build --workspace=apps/backend && npm run build --workspace=apps/frontend",
-    "install:all": "npm install"
+    "install:all": "npm install",
+    "security:audit": "node scripts/scan_dependencies.js",
+    "security:sbom": "node scripts/generate_sbom.js",
+    "security:sast": "node scripts/sast_scanner.js",
+    "security:dast": "node scripts/dast_scanner.js",
+    "security:secrets": "node scripts/scan_secrets.js",
+    "security:all": "node scripts/run_all_security_tests.js"
   },
   "devDependencies": {
     "@vercel/node": "^13.0.0",
