@@ -130,7 +130,7 @@ async function runTestSuite() {
     assert(typeof aiSecurity.enforceAiAccessControl === 'function', 'AI access control & quota rate limiting middleware is exported');
 
     // 2. Validate AI-Generated Queries (Anti-SQLi & Table Whitelist)
-    const validSelect = aiSecurity.validateAiGeneratedQuery('SELECT crop_type, msp_price FROM msp_rates WHERE crop_type = ', ['wheat']);
+    const validSelect = aiSecurity.validateAiGeneratedQuery('SELECT crop_type, msp_price FROM msp_rates WHERE crop_type = $1', ['wheat']);
     assert(validSelect.isValid === true, 'Allows authorized parameterized read-only SELECT queries on whitelisted tables');
 
     const dangerousDrop = aiSecurity.validateAiGeneratedQuery('DROP TABLE users;');
