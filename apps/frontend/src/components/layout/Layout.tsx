@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   Globe,
@@ -9,6 +9,7 @@ import {
   Menu,
   X,
   Sparkles,
+  Search,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
@@ -17,10 +18,12 @@ import { NotificationBell } from '../domain/NotificationBell';
 import { VoiceAssistant } from '../domain/VoiceAssistant';
 import { MandiBhavTicker } from '../common/MandiBhavTicker';
 import { KisanMitraModal } from '../common/KisanMitraModal';
+import { GlobalSearch } from '../common/GlobalSearch';
 import { FarmerBottomNav } from './FarmerBottomNav';
 import { OfficerSidebar } from './OfficerSidebar';
 import { AdminSidebar } from './AdminSidebar';
 import { Modal } from '../ui/Modal';
+
 
 export const Layout: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -29,13 +32,27 @@ export const Layout: React.FC = () => {
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const [isKisanMitraOpen, setIsKisanMitraOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Global Ctrl+K / Cmd+K shortcut
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen((o) => !o);
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
+
 
   const isFarmer = user?.role === 'farmer';
   const isOfficer = user?.role === 'officer';
@@ -115,6 +132,26 @@ export const Layout: React.FC = () => {
 
         {/* Right Action Icons */}
         <div className="flex items-center gap-2.5">
+          {/* Search Button */}
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border border-farmborder/60 hover:bg-surface-2 dark:hover:bg-gray-800 text-xs font-medium text-text-muted dark:text-gray-400 transition-all shadow-xs"
+            title="Search features, crops, mandis (Ctrl+K)"
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span className="hidden lg:inline">Search</span>
+            <kbd className="hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-bold border border-farmborder/60 dark:border-gray-700 rounded-md bg-surface dark:bg-gray-800">
+              ⌘K
+            </kbd>
+          </button>
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="sm:hidden p-2 rounded-full border border-farmborder/50 dark:border-gray-800 text-text-muted hover:text-text-primary hover:bg-surface-2 dark:hover:bg-gray-800 transition-colors"
+            aria-label="Search"
+          >
+            <Search className="w-4 h-4" />
+          </button>
+
           {/* Language Picker */}
           <button
             onClick={() => setIsLangModalOpen(true)}
@@ -249,6 +286,9 @@ export const Layout: React.FC = () => {
           })}
         </div>
       </Modal>
+
+      {/* Global Search Modal */}
+      <GlobalSearch isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </div>
   );
 };

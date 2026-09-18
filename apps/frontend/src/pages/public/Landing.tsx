@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Calendar,
@@ -21,6 +21,8 @@ import {
   Menu,
   X,
   ExternalLink,
+  Search,
+  Share2,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { CentreCard } from '../../components/domain/CentreCard';
@@ -29,6 +31,9 @@ import { MandiBhavTicker } from '../../components/common/MandiBhavTicker';
 import { KisanMitraModal } from '../../components/common/KisanMitraModal';
 import { FeatureDetailModal, FeatureDetail } from '../../components/common/FeatureDetailModal';
 import { AgriOSShowcase } from '../../components/common/AgriOSShowcase';
+import { GlobalSearch } from '../../components/common/GlobalSearch';
+import { AnnouncementsBanner } from '../../components/common/AnnouncementsBanner';
+import { StickyCtaBar } from '../../components/common/StickyCtaBar';
 import { differentiatorsData } from '../../data/differentiatorsData';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
@@ -46,6 +51,39 @@ export const Landing: React.FC = () => {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [newsletterPhone, setNewsletterPhone] = useState('');
   const [selectedFeature, setSelectedFeature] = useState<FeatureDetail | null>(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const heroRef = useRef<HTMLElement>(null);
+
+  // Global Ctrl+K shortcut for Landing search
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen((o) => !o);
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'KrishiSeva — Smart Farmer Procurement',
+          text: 'Book guaranteed mandi slots and get MSP payments in 72 hours. India\'s official farmer platform.',
+          url: window.location.href,
+        });
+      } catch {
+        // user cancelled
+      }
+    } else {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success('Link copied to clipboard!');
+    }
+  };
+
+
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,7 +103,7 @@ export const Landing: React.FC = () => {
       hindi: 'गेहूं',
       msp: '₹2,425 / Qtl',
       season: 'Rabi 2026',
-      image: '/images/crops/wheat.jpg',
+      image: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?q=80&w=400&auto=format&fit=crop',
       badge: 'Active Procurement',
     },
     {
@@ -73,7 +111,7 @@ export const Landing: React.FC = () => {
       hindi: 'धान (बासमती)',
       msp: '₹2,300 / Qtl',
       season: 'Kharif 2025',
-      image: '/images/crops/paddy.jpg',
+      image: 'https://images.unsplash.com/photo-1536304929831-ee1ca9d44906?q=80&w=400&auto=format&fit=crop',
       badge: 'High Demand',
     },
     {
@@ -81,7 +119,7 @@ export const Landing: React.FC = () => {
       hindi: 'सरसों',
       msp: '₹5,950 / Qtl',
       season: 'Rabi 2026',
-      image: '/images/crops/mustard.jpg',
+      image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?q=80&w=400&auto=format&fit=crop',
       badge: 'MSP Shielded',
     },
     {
@@ -89,7 +127,7 @@ export const Landing: React.FC = () => {
       hindi: 'कपास (नरमा)',
       msp: '₹7,121 / Qtl',
       season: 'Kharif 2025',
-      image: '/images/crops/cotton.jpg',
+      image: 'https://images.unsplash.com/photo-1605000797498-6f2145b1d53c?q=80&w=400&auto=format&fit=crop',
       badge: 'Certified Scale',
     },
     {
@@ -97,7 +135,7 @@ export const Landing: React.FC = () => {
       hindi: 'मक्का',
       msp: '₹2,090 / Qtl',
       season: 'Kharif 2025',
-      image: '/images/crops/maize.jpg',
+      image: 'https://images.unsplash.com/photo-1602490041564-5d30bed11a52?q=80&w=400&auto=format&fit=crop',
       badge: 'Fast Clearance',
     },
     {
@@ -105,7 +143,7 @@ export const Landing: React.FC = () => {
       hindi: 'चना (दाल)',
       msp: '₹5,650 / Qtl',
       season: 'Rabi 2026',
-      image: '/images/crops/chickpea.jpg',
+      image: 'https://images.unsplash.com/photo-1585237017125-24c5ff9e7a09?q=80&w=400&auto=format&fit=crop',
       badge: 'Direct DBT',
     },
     {
@@ -113,7 +151,7 @@ export const Landing: React.FC = () => {
       hindi: 'सोयाबीन',
       msp: '₹4,892 / Qtl',
       season: 'Kharif 2025',
-      image: '/images/crops/soybean.jpg',
+      image: 'https://images.unsplash.com/photo-1600391551246-3ecb77bceefb?q=80&w=400&auto=format&fit=crop',
       badge: 'Direct DBT',
     },
     {
@@ -121,17 +159,18 @@ export const Landing: React.FC = () => {
       hindi: 'मूंगफली',
       msp: '₹6,783 / Qtl',
       season: 'Kharif 2025',
-      image: '/images/crops/groundnut.jpg',
+      image: 'https://images.unsplash.com/photo-1567892737950-30c4db39d5e4?q=80&w=400&auto=format&fit=crop',
       badge: 'Certified Quality',
     },
   ];
+
 
   const testimonials = [
     {
       name: 'Gurpreet Singh',
       village: 'Tarn Taran, Amritsar, Punjab',
       crop: 'Wheat (48 Quintals)',
-      avatar: '/images/farmers/gurpreet.jpg',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop&crop=face',
       quote:
         'Earlier, I used to wait in tractor lines for 3 days and nights in November cold. With KrishiSeva, I booked slot 10 AM, weighed in 20 minutes, and money reached my PNB account in 48 hours!',
       rating: 5,
@@ -140,7 +179,7 @@ export const Landing: React.FC = () => {
       name: 'Ramesh Yadav',
       village: 'Saharsa, Patna, Bihar',
       crop: 'Paddy & Maize',
-      avatar: '/images/farmers/ramesh.jpg',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=150&auto=format&fit=crop&crop=face',
       quote:
         'Local traders offered ₹1,800 for paddy when MSP was ₹2,300. KrishiSeva helped me book a slot at the central mandi and saved ₹24,000 on my harvest!',
       rating: 5,
@@ -149,12 +188,13 @@ export const Landing: React.FC = () => {
       name: 'Sunita Devi',
       village: 'Narnaul, Hisar, Haryana',
       crop: 'Mustard (30 Quintals)',
-      avatar: '/images/farmers/sunita.jpg',
+      avatar: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?q=80&w=150&auto=format&fit=crop&crop=face',
       quote:
         'The live queue on phone is a blessing. We reached the mandi only when token #40 was called, avoiding waiting with our children in dusty sheds.',
       rating: 5,
     },
   ];
+
 
   const sampleCentres = [
     {
@@ -300,6 +340,19 @@ export const Landing: React.FC = () => {
 
         {/* Right: Language Pill, Theme Toggle, & Login CTA */}
         <div className="flex items-center gap-2.5">
+          {/* Search Button */}
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border border-farmborder dark:border-gray-700 bg-surface dark:bg-gray-800 hover:bg-surface-2 dark:hover:bg-gray-700 text-xs font-medium text-text-muted dark:text-gray-400 transition-all shadow-xs"
+            title="Search (Ctrl+K)"
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span className="hidden lg:inline">Search</span>
+            <kbd className="hidden lg:inline-flex px-1.5 py-0.5 text-[10px] font-bold border border-farmborder/60 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700">
+              ⌘K
+            </kbd>
+          </button>
+
           {/* Language Selector Pill (As shown in screenshot: Globe icon + EN) */}
           <button
             onClick={() => setIsLangModalOpen(true)}
@@ -409,7 +462,7 @@ export const Landing: React.FC = () => {
       )}
 
       {/* 1. HERO SECTION (Pattern B: Full-bleed Farm Photography with Deep Cinematic Glow) */}
-      <section className="relative min-h-[640px] lg:min-h-[740px] flex items-center bg-primary-dark text-white overflow-hidden organic-texture">
+      <section ref={heroRef} className="relative min-h-[640px] lg:min-h-[740px] flex items-center bg-primary-dark text-white overflow-hidden organic-texture">
         {/* Farm Background Image with Heavy Left Gradient */}
         <div
           className="absolute inset-0 bg-cover bg-center opacity-35 mix-blend-overlay scale-105 transition-transform duration-1000 ease-out"
@@ -444,7 +497,7 @@ export const Landing: React.FC = () => {
               किसान को मिलेगा{' '}
               <span className="inline-flex items-center align-middle mx-1.5 px-2.5 py-1 rounded-full bg-gold/30 backdrop-blur-md border border-gold/60 shadow-lg hover:scale-105 transition-transform">
                 <img
-                  src="/images/farmers/gurpreet.jpg"
+                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=80&auto=format&fit=crop&crop=face"
                   alt="Kisan"
                   className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-gold shadow"
                 />
@@ -453,7 +506,7 @@ export const Landing: React.FC = () => {
               <span className="text-gold-light italic font-serif">उसका हक़</span>{' '}
               <span className="inline-flex items-center align-middle mx-1.5 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/50 shadow-lg hover:scale-105 transition-transform">
                 <img
-                  src="/images/crops/wheat.jpg"
+                  src="https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?q=80&w=80&auto=format&fit=crop"
                   alt="Golden Grain"
                   className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-white shadow"
                 />
@@ -486,6 +539,14 @@ export const Landing: React.FC = () => {
                   🚀 20 Agri Innovations
                 </Button>
               </Link>
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/30 text-white/80 hover:text-white hover:border-white/60 hover:bg-white/10 text-sm font-medium transition-all"
+                title="Share KrishiSeva"
+              >
+                <Share2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Share</span>
+              </button>
             </div>
 
             {/* Trust Badges */}
@@ -593,6 +654,9 @@ export const Landing: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* GOVERNMENT ANNOUNCEMENTS — Fresh Content Section */}
+      <AnnouncementsBanner />
 
       {/* 3. NATIONAL DIFFERENTIATORS GRID */}
       <section className="py-20 bg-surface dark:bg-gray-900">
@@ -1075,54 +1139,118 @@ export const Landing: React.FC = () => {
 
       {/* 9. FOOTER */}
       <footer className="bg-dark text-gray-400 py-16 text-xs border-t border-gray-800">
-        <div className="container mx-auto px-4 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-10">
-          <div className="space-y-3 md:col-span-1">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">🌾</span>
-              <span className="font-heading text-xl font-bold text-white">KrishiSeva</span>
+        <div className="container mx-auto px-4 lg:px-8 space-y-10">
+          {/* Social Media Row */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-8 border-b border-gray-800">
+            <div>
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="text-2xl">🌾</span>
+                <span className="font-heading text-xl font-bold text-white">KrishiSeva</span>
+              </div>
+              <p className="text-gray-500 text-[11px]">Official Govt of India · Department of Consumer Affairs</p>
             </div>
-            <p className="text-gray-400 leading-relaxed text-[11px]">
-              India's National Smart Farmer Procurement Platform for the Ministry of Consumer Affairs, Food & Public Distribution.
-            </p>
-            <p className="text-gold font-semibold text-[10px]">Unified National Farmer Procurement & Direct Benefit Transfer Portal</p>
+            {/* Social Icons */}
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mr-1">Follow</span>
+              {/* Twitter/X */}
+              <a
+                href="https://twitter.com/krishiseva_india"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="KrishiSeva on Twitter/X"
+                className="w-9 h-9 rounded-full bg-gray-800 hover:bg-[#1DA1F2] flex items-center justify-center text-gray-400 hover:text-white transition-all"
+              >
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.259 5.631zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              </a>
+              {/* WhatsApp */}
+              <a
+                href="https://wa.me/911800180551"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="KrishiSeva on WhatsApp"
+                className="w-9 h-9 rounded-full bg-gray-800 hover:bg-[#25D366] flex items-center justify-center text-gray-400 hover:text-white transition-all"
+              >
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              </a>
+              {/* YouTube */}
+              <a
+                href="https://youtube.com/@krishiseva"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="KrishiSeva on YouTube"
+                className="w-9 h-9 rounded-full bg-gray-800 hover:bg-[#FF0000] flex items-center justify-center text-gray-400 hover:text-white transition-all"
+              >
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              </a>
+              {/* Facebook */}
+              <a
+                href="https://facebook.com/krishiseva.india"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="KrishiSeva on Facebook"
+                className="w-9 h-9 rounded-full bg-gray-800 hover:bg-[#1877F2] flex items-center justify-center text-gray-400 hover:text-white transition-all"
+              >
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+              </a>
+              {/* Telegram */}
+              <a
+                href="https://t.me/krishiseva_alerts"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="KrishiSeva on Telegram"
+                className="w-9 h-9 rounded-full bg-gray-800 hover:bg-[#26A5E4] flex items-center justify-center text-gray-400 hover:text-white transition-all"
+              >
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+              </a>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <h4 className="font-bold text-white uppercase tracking-wider text-[11px]">For Farmers</h4>
-            <ul className="space-y-1.5 text-gray-400">
-              <li><Link to="/farmer/book-slot" className="hover:text-white">Book Mandi Slot</Link></li>
-              <li><Link to="/farmer/queue" className="hover:text-white">Live Queue Monitor</Link></li>
-              <li><Link to="/farmer/msp-calculator" className="hover:text-white">MSP vs Trader Calculator</Link></li>
-              <li><Link to="/farmer/payments" className="hover:text-white">Direct Bank Disbursals</Link></li>
-              <li><Link to="/farmer/map" className="hover:text-white">Mandi GIS Heatmap</Link></li>
-            </ul>
-          </div>
+          {/* Main footer columns */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
+            <div className="space-y-3 md:col-span-1">
+              <p className="text-gray-400 leading-relaxed text-[11px]">
+                India's National Smart Farmer Procurement Platform for the Ministry of Consumer Affairs, Food &amp; Public Distribution.
+              </p>
+              <p className="text-gold font-semibold text-[10px]">Unified National Farmer Procurement &amp; Direct Benefit Transfer Portal</p>
+            </div>
 
-          <div className="space-y-2">
-            <h4 className="font-bold text-white uppercase tracking-wider text-[11px]">Officers & Admin</h4>
-            <ul className="space-y-1.5 text-gray-400">
-              <li><Link to="/login" className="hover:text-white">Officer Gate Login</Link></li>
-              <li><Link to="/login" className="hover:text-white">Weighbridge Dashboard</Link></li>
-              <li><Link to="/admin/analytics" className="hover:text-white">National Analytics</Link></li>
-              <li><Link to="/admin/grievances" className="hover:text-white">72h SLA Grievance Cell</Link></li>
-              <li><Link to="/display/10000000-0000-0000-0000-000000000001" className="hover:text-white">TV Token Display Board</Link></li>
-            </ul>
-          </div>
+            <div className="space-y-2">
+              <h4 className="font-bold text-white uppercase tracking-wider text-[11px]">For Farmers</h4>
+              <ul className="space-y-1.5 text-gray-400">
+                <li><Link to="/farmer/book-slot" className="hover:text-white">Book Mandi Slot</Link></li>
+                <li><Link to="/farmer/queue" className="hover:text-white">Live Queue Monitor</Link></li>
+                <li><Link to="/farmer/msp-calculator" className="hover:text-white">MSP vs Trader Calculator</Link></li>
+                <li><Link to="/farmer/payments" className="hover:text-white">Direct Bank Disbursals</Link></li>
+                <li><Link to="/farmer/map" className="hover:text-white">Mandi GIS Heatmap</Link></li>
+              </ul>
+            </div>
 
-          <div className="space-y-2">
-            <h4 className="font-bold text-white uppercase tracking-wider text-[11px]">Government of India</h4>
-            <p className="text-gray-400 text-[11px] leading-relaxed">
-              Department of Consumer Affairs<br />
-              Krishi Bhawan, New Delhi, 110001<br />
-              Toll Free Helpline: 1800-180-1551
-            </p>
-            <div className="pt-2 flex flex-col gap-1 text-[11px]">
-              <Link to="/privacy" className="text-gold hover:text-gold-light underline font-medium">
-                🛡️ DPDP Act Privacy Policy & Compliance Notice
-              </Link>
-              <span className="text-gray-500 text-[10px]">
-                © 2026 KrishiSeva Platform. All rights reserved.
-              </span>
+            <div className="space-y-2">
+              <h4 className="font-bold text-white uppercase tracking-wider text-[11px]">Officers &amp; Admin</h4>
+              <ul className="space-y-1.5 text-gray-400">
+                <li><Link to="/login" className="hover:text-white">Officer Gate Login</Link></li>
+                <li><Link to="/login" className="hover:text-white">Weighbridge Dashboard</Link></li>
+                <li><Link to="/admin/analytics" className="hover:text-white">National Analytics</Link></li>
+                <li><Link to="/admin/grievances" className="hover:text-white">72h SLA Grievance Cell</Link></li>
+                <li><Link to="/display/10000000-0000-0000-0000-000000000001" className="hover:text-white">TV Token Display Board</Link></li>
+              </ul>
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-bold text-white uppercase tracking-wider text-[11px]">Government of India</h4>
+              <p className="text-gray-400 text-[11px] leading-relaxed">
+                Department of Consumer Affairs<br />
+                Krishi Bhawan, New Delhi, 110001<br />
+                Toll Free Helpline: 1800-180-1551
+              </p>
+              <div className="pt-2 flex flex-col gap-1 text-[11px]">
+                <Link to="/privacy" className="text-gold hover:text-gold-light underline font-medium">
+                  🛡️ DPDP Act Privacy Policy &amp; Compliance Notice
+                </Link>
+                <span className="text-gray-500 text-[10px]">
+                  © 2026 KrishiSeva Platform. All rights reserved.
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -1184,6 +1312,12 @@ export const Landing: React.FC = () => {
           navigate(route);
         }}
       />
+
+      {/* Global Search Modal */}
+      <GlobalSearch isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+
+      {/* Sticky Mobile CTA Bar — appears after scrolling past hero */}
+      {!isAuthenticated && <StickyCtaBar heroRef={heroRef} />}
     </div>
   );
 };

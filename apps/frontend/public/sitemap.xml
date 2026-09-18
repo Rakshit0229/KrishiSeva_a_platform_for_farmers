@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <!-- Home / Landing -->
+  <url>
+    <loc>https://krishiseva.gov.in/</loc>
+    <lastmod>2026-09-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://krishiseva.gov.in/" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://krishiseva.gov.in/?lang=hi" />
+  </url>
+
+  <!-- Login -->
+  <url>
+    <loc>https://krishiseva.gov.in/login</loc>
+    <lastmod>2026-09-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Help & Grievances -->
+  <url>
+    <loc>https://krishiseva.gov.in/help</loc>
+    <lastmod>2026-09-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Privacy Policy -->
+  <url>
+    <loc>https://krishiseva.gov.in/privacy</loc>
+    <lastmod>2026-09-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- Error / Info Pages -->
+  <url>
+    <loc>https://krishiseva.gov.in/404</loc>
+    <lastmod>2026-09-18</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.1</priority>
+  </url>
+
+  <!-- Token Display Board (public TV mode) -->
+  <url>
+    <loc>https://krishiseva.gov.in/display/10000000-0000-0000-0000-000000000001</loc>
+    <lastmod>2026-09-18</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+</urlset>

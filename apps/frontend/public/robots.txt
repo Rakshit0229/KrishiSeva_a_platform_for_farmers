@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+Allow: /farmer/
+Allow: /help
+Allow: /privacy
+Allow: /display/
+
+# Private authenticated areas
+Disallow: /farmer/dashboard
+Disallow: /farmer/book-slot
+Disallow: /farmer/queue
+Disallow: /farmer/payments
+Disallow: /farmer/history
+Disallow: /farmer/profile
+Disallow: /officer/
+Disallow: /admin/
+Disallow: /login
+
+# Sitemap
+Sitemap: https://krishiseva.gov.in/sitemap.xml
