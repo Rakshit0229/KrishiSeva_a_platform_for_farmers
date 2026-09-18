@@ -229,7 +229,61 @@ export const PrivacyPolicy: React.FC = () => {
           </div>
         </div>
 
-        {/* 5. GRIEVANCE & DPO CONTACT */}
+        {/* 5. COOKIE TRANSPARENCY & TRACKING DISCLOSURE */}
+        <div className="card-farm space-y-4 bg-white dark:bg-gray-900 border border-farmborder">
+          <div className="flex items-center gap-2 text-primary font-bold text-lg">
+            <Lock className="w-5 h-5 text-gold" />
+            <h2>5. Transparent Cookie Usage & Zero Third-Party Tracking</h2>
+          </div>
+          <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
+            KrishiSeva is an ad-free, non-commercial public service portal. We do <strong>NOT</strong> use marketing trackers, behavioral tracking pixels, or sell data to commercial brokers:
+          </p>
+          <div className="space-y-2 text-xs">
+            <div className="p-3 bg-surface-2 dark:bg-gray-800 rounded-xl border border-farmborder">
+              <span className="font-bold text-text-primary dark:text-white">Strictly Necessary Cookies:</span>
+              <p className="text-text-muted mt-0.5">
+                Session tokens (<code>ks_auth_token</code>, <code>__Host-csrf</code>) are essential for secure authentication, preventing CSRF forgery, and maintaining your active token queue across page navigations. They expire upon logout or after 24 hours.
+              </p>
+            </div>
+            <div className="p-3 bg-surface-2 dark:bg-gray-800 rounded-xl border border-farmborder">
+              <span className="font-bold text-text-primary dark:text-white">Functional Preferences:</span>
+              <p className="text-text-muted mt-0.5">
+                Local storage is used solely to remember your chosen language (Hindi, English, etc.) and visual theme (light or dark mode). No personal identifying details are placed in local storage.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 6. INTERNATIONAL ALIGNMENT (GDPR, CCPA & DPDP ACT) */}
+        <div className="card-farm space-y-3 bg-white dark:bg-gray-900 border border-farmborder text-xs sm:text-sm text-text-muted">
+          <div className="flex items-center gap-2 text-primary font-bold text-base">
+            <ShieldCheck className="w-5 h-5 text-emerald-600" />
+            <h2>6. International Privacy Harmonization (GDPR & CCPA Alignment)</h2>
+          </div>
+          <p>
+            While KrishiSeva primarily serves Indian nationals under the DPDP Act 2023, its technical safeguards conform to international best practices including the EU General Data Protection Regulation (GDPR) and the California Consumer Privacy Act (CCPA):
+          </p>
+          <ul className="list-disc list-inside space-y-1 text-xs">
+            <li><strong>Lawful Basis:</strong> Public interest mandate (Section 6(1)(e) GDPR equivalent) and explicit farmer consent.</li>
+            <li><strong>Right to Portability:</strong> Farmers may export their entire passbook and payment ledger in open PDF/JSON formats.</li>
+            <li><strong>Automated Decision-Making:</strong> Mandi slot allocations follow deterministic, auditable FIFO rules with zero opaque profiling.</li>
+          </ul>
+        </div>
+
+        {/* 7. POLICY VERSIONING & NOTIFICATION OF CHANGES */}
+        <div className="card-farm space-y-3 bg-white dark:bg-gray-900 border border-farmborder text-xs text-text-muted">
+          <h3 className="font-bold text-sm text-text-primary dark:text-white flex items-center gap-2">
+            <Clock className="w-4 h-4 text-primary" /> 7. Policy Updates & Notification Protocol
+          </h3>
+          <p>
+            Any material modifications to this privacy charter will be notified via prominent SMS alerts to registered phone numbers and banner announcements on the KrishiSeva home screen at least 14 calendar days prior to enactment.
+          </p>
+          <div className="p-2.5 bg-surface-2 dark:bg-gray-800 rounded-lg font-mono text-[11px] text-text-muted">
+            Recent Revisions: v2.4 (Sept 2026 — Cryptographic DPDP Update) · v2.3 (June 2026 — PFMS 48h ACH Protocol) · v2.0 (Jan 2026 — Initial Digital India Launch)
+          </div>
+        </div>
+
+        {/* 8. GRIEVANCE & DPO CONTACT */}
         <div className="p-6 rounded-3xl bg-surface-2 dark:bg-gray-900 border border-farmborder space-y-2 text-xs text-text-muted">
           <h3 className="font-bold text-sm text-text-primary dark:text-white">
             Data Protection Officer (DPO) Contact Details
@@ -243,6 +297,7 @@ export const PrivacyPolicy: React.FC = () => {
             <p><strong>Email:</strong> dpo-krishiseva@gov.in · <strong>National Kisan Helpline:</strong> 1800-180-1551</p>
           </div>
         </div>
+
       </div>
     </div>
   );

@@ -14,3 +14,5 @@ yarn-error.log*
 *.sw?
 postgres_data/
 redis_data/
+backups/
+

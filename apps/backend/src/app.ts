@@ -180,7 +180,21 @@ v1Router.use('/chat', chatRoutes);
 v1Router.use('/innovations', innovationsRoutes);
 v1Router.use('/admin/security', monitoringRoutes);
 v1Router.use('/admin/infra', infraRoutes);
+
+
+// Client Error Telemetry Ingestion (Production Monitoring)
+v1Router.post('/telemetry/errors', express.json({ limit: '64kb' }), (req, res) => {
+  const { errors } = req.body || {};
+  if (Array.isArray(errors)) {
+    for (const err of errors.slice(0, 10)) {
+      console.warn(`[CLIENT TELEMETRY ${err.type || 'ERROR'}] ${err.url}: ${err.message}`);
+    }
+  }
+  return res.json({ received: Array.isArray(errors) ? errors.length : 0, status: 'logged' });
+});
+
 v1Router.use('/', featureRoutes);
+
 
 // Mount /api/v1 as primary versioned API
 app.use('/api/v1', standardApiLimiter, v1Router);

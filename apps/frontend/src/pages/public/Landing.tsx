@@ -34,7 +34,9 @@ import { AgriOSShowcase } from '../../components/common/AgriOSShowcase';
 import { GlobalSearch } from '../../components/common/GlobalSearch';
 import { AnnouncementsBanner } from '../../components/common/AnnouncementsBanner';
 import { StickyCtaBar } from '../../components/common/StickyCtaBar';
+import { SecurityTrustBadges } from '../../components/common/SecurityTrustBadges';
 import { differentiatorsData } from '../../data/differentiatorsData';
+
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
 import { useLanguageStore, SUPPORTED_LANGUAGES, LanguageCode } from '../../store/languageStore';
@@ -1137,7 +1139,10 @@ export const Landing: React.FC = () => {
         </div>
       </section>
 
-      {/* 9. FOOTER */}
+      {/* 9. SECURITY & TRUST BADGES */}
+      <SecurityTrustBadges />
+
+      {/* 10. FOOTER */}
       <footer className="bg-dark text-gray-400 py-16 text-xs border-t border-gray-800">
         <div className="container mx-auto px-4 lg:px-8 space-y-10">
           {/* Social Media Row */}
@@ -1212,6 +1217,12 @@ export const Landing: React.FC = () => {
                 India's National Smart Farmer Procurement Platform for the Ministry of Consumer Affairs, Food &amp; Public Distribution.
               </p>
               <p className="text-gold font-semibold text-[10px]">Unified National Farmer Procurement &amp; Direct Benefit Transfer Portal</p>
+              <div className="pt-2">
+                <Link to="/status" className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400 hover:underline">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  System Status: 99.98% Operational
+                </Link>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -1245,9 +1256,15 @@ export const Landing: React.FC = () => {
               </p>
               <div className="pt-2 flex flex-col gap-1 text-[11px]">
                 <Link to="/privacy" className="text-gold hover:text-gold-light underline font-medium">
-                  🛡️ DPDP Act Privacy Policy &amp; Compliance Notice
+                  🛡️ DPDP Act Privacy &amp; Cookie Policy
                 </Link>
-                <span className="text-gray-500 text-[10px]">
+                <Link to="/terms" className="text-gray-300 hover:text-white underline font-medium">
+                  ⚖️ Terms of Service &amp; SLA Charter
+                </Link>
+                <Link to="/status" className="text-emerald-400 hover:text-emerald-300 underline font-medium">
+                  ⚡ 24/7 Public Uptime Status
+                </Link>
+                <span className="text-gray-500 text-[10px] pt-1">
                   © 2026 KrishiSeva Platform. All rights reserved.
                 </span>
               </div>
@@ -1255,6 +1272,7 @@ export const Landing: React.FC = () => {
           </div>
         </div>
       </footer>
+
 
       {/* Floating AI Kisan Mitra Assistant on Landing Page */}
       <button

@@ -31,6 +31,10 @@
     font-family: var(--font-body);
     background-color: var(--color-surface);
     color: var(--color-text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    -webkit-tap-highlight-color: transparent;
   }
 
   h1, h2, h3, .font-heading {
@@ -40,7 +44,37 @@
   .font-display {
     font-family: var(--font-display);
   }
+
+  /* Accessibility: High-contrast focus-visible indicator for keyboard navigation */
+  :focus-visible {
+    outline: 2px solid #D4A017 !important;
+    outline-offset: 2px !important;
+  }
+
+  /* Screen reader only utility (WCAG compliance) */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* Accessibility: Respect user preference for reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
+
 
 /* Pattern A — Organic Texture Overlay */
 .organic-texture {
