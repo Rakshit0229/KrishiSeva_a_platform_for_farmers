@@ -6,6 +6,9 @@ import { useAuthStore } from './store/authStore';
 import { useThemeStore } from './store/themeStore';
 import { Layout } from './components/layout/Layout';
 import { Spinner } from './components/ui/Spinner';
+import { KrishiSproutLoader } from './components/common/KrishiSproutLoader';
+import { AppSplashScreen } from './components/common/AppSplashScreen';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 // Lazy-load all pages for code splitting
 // Public
@@ -14,6 +17,8 @@ const OTPLogin = lazy(() => import('./pages/public/OTPLogin'));
 const HelpCenter = lazy(() => import('./pages/public/HelpCenter'));
 const TokenDisplayBoard = lazy(() => import('./pages/public/TokenDisplayBoard'));
 const PrivacyPolicy = lazy(() => import('./pages/public/PrivacyPolicy'));
+const LoadingPage = lazy(() => import('./pages/public/LoadingPage'));
+import { ErrorPage } from './pages/public/ErrorPage';
 
 // Farmer
 const FarmerDashboard = lazy(() => import('./pages/farmer/FarmerDashboard'));
@@ -87,11 +92,13 @@ function RedirectAuthenticated({ children }: { children: React.ReactNode }) {
 
 function PageLoader() {
   return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="text-center space-y-4">
-        <Spinner size="lg" />
-        <p className="text-sm text-text-muted font-medium">Loading KrishiSeva...</p>
-      </div>
+    <div className="flex items-center justify-center min-h-[60vh] py-16">
+      <KrishiSproutLoader
+        size="lg"
+        showLabel
+        label="लोड हो रहा है • Loading KrishiSeva..."
+        sublabel="Connecting to National Mandi Gateway"
+      />
     </div>
   );
 }
@@ -396,8 +403,13 @@ function AppRoutes() {
         <Route path="/msp-calculator" element={<Navigate to="/farmer/msp-calculator" replace />} />
         <Route path="/payments" element={<Navigate to="/farmer/payments" replace />} />
 
-        {/* 404 Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* ── Dedicated Loading & Error Page Routes ── */}
+        <Route path="/loading" element={<LoadingPage />} />
+        <Route path="/error" element={<ErrorPage type="500" />} />
+        <Route path="/404" element={<ErrorPage type="404" />} />
+
+        {/* 404 Catch-All Fallback (Aesthetic Agricultural Detour Error Page) */}
+        <Route path="*" element={<ErrorPage type="404" />} />
       </Routes>
 
     </Suspense>
@@ -417,32 +429,36 @@ function App() {
   }, [isDark]);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AppRoutes />
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: isDark ? '#1a2e1a' : '#fff',
-              color: isDark ? '#e8f5e9' : '#1C2B1C',
-              border: `1px solid ${isDark ? '#2A6B35' : '#D4E6C3'}`,
-              borderRadius: '12px',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              boxShadow: '0 4px 24px rgba(42, 107, 53, 0.15)',
-            },
-            success: {
-              iconTheme: { primary: '#2A6B35', secondary: '#fff' },
-            },
-            error: {
-              iconTheme: { primary: '#DC2626', secondary: '#fff' },
-            },
-          }}
-        />
-      </BrowserRouter>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      {/* Aesthetic opening animation when a user opens KrishiSeva */}
+      <AppSplashScreen />
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <AppRoutes />
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: isDark ? '#1a2e1a' : '#fff',
+                color: isDark ? '#e8f5e9' : '#1C2B1C',
+                border: `1px solid ${isDark ? '#2A6B35' : '#D4E6C3'}`,
+                borderRadius: '12px',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                boxShadow: '0 4px 24px rgba(42, 107, 53, 0.15)',
+              },
+              success: {
+                iconTheme: { primary: '#2A6B35', secondary: '#fff' },
+              },
+              error: {
+                iconTheme: { primary: '#DC2626', secondary: '#fff' },
+              },
+            }}
+          />
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

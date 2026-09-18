@@ -269,6 +269,117 @@
   animation: shimmer 3s infinite;
 }
 
+/* KrishiSeva Agritech Opening & Loading Keyframes */
+@keyframes aura-breathe {
+  0%, 100% {
+    transform: scale(0.95);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0.85;
+  }
+}
+
+@keyframes orbit-cw {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes orbit-ccw {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes sprout-stem {
+  0% {
+    stroke-dashoffset: 120;
+    opacity: 0.2;
+  }
+  50% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+@keyframes leaf-bloom-left {
+  0% {
+    transform: scale(0) rotate(-30deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15) rotate(5deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes leaf-bloom-right {
+  0% {
+    transform: scale(0) rotate(30deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15) rotate(-5deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes grain-pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 6px rgba(212, 160, 23, 0.4));
+  }
+  50% {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 16px rgba(212, 160, 23, 0.85));
+  }
+}
+
+@keyframes float-particle {
+  0% {
+    transform: translateY(0) translateX(0) scale(0.8);
+    opacity: 0;
+  }
+  25% {
+    opacity: 0.8;
+  }
+  75% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-80px) translateX(20px) scale(1.1);
+    opacity: 0;
+  }
+}
+
+.animate-aura-breathe {
+  animation: aura-breathe 4s ease-in-out infinite;
+}
+
+.animate-orbit-cw {
+  animation: orbit-cw 20s linear infinite;
+}
+
+.animate-orbit-ccw {
+  animation: orbit-ccw 26s linear infinite;
+}
+
+.animate-grain-pulse {
+  animation: grain-pulse 2.2s ease-in-out infinite;
+}
+
 /* Dark mode adjustments */
 .dark body {
   background-color: #0d140e;
