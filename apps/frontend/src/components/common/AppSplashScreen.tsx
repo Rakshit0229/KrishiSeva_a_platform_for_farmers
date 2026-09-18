@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { KrishiSproutLoader } from './KrishiSproutLoader';
+import { KrishiLetterSwap } from './KrishiLetterSwap';
 import { Sparkles, ShieldCheck, ArrowRight } from 'lucide-react';
 
 interface AppSplashScreenProps {
@@ -17,7 +18,7 @@ const MILESTONES = [
 
 export const AppSplashScreen: React.FC<AppSplashScreenProps> = ({
   onFinish,
-  minDurationMs = 1700,
+  minDurationMs = 1900,
   forceShow = false,
 }) => {
   const [visible, setVisible] = useState(() => {
@@ -170,31 +171,19 @@ export const AppSplashScreen: React.FC<AppSplashScreenProps> = ({
         </button>
       </div>
 
-      {/* Central Hero: Sprout Animation & Majestic Typography */}
+      {/* Central Hero: Sprout Animation & Kinetic Letter-Swap Forming 'KrishiSeva' */}
       <div className="flex flex-col items-center justify-center text-center relative z-20 my-auto py-4">
         {/* Animated Sprout Loader Glyph */}
-        <div className="mb-6 transform hover:scale-105 transition-transform duration-500">
-          <KrishiSproutLoader size="lg" />
+        <div className="mb-2 transform hover:scale-105 transition-transform duration-500">
+          <KrishiSproutLoader size="md" />
         </div>
 
-        {/* Brand Typography */}
-        <div className="space-y-1 mb-3">
-          <div className="flex items-center justify-center gap-2">
-            <span className="h-[1px] w-6 bg-gradient-to-r from-transparent to-gold/70" />
-            <span className="text-xs uppercase tracking-[0.3em] font-semibold text-gold-light/90">
-              National Farmer Support Network
-            </span>
-            <span className="h-[1px] w-6 bg-gradient-to-l from-transparent to-gold/70" />
-          </div>
+        {/* Kinetic Letter Swap Animation: Letters move & swap, forming KrishiSeva */}
+        <KrishiLetterSwap durationMs={1800} className="my-1" />
 
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight drop-shadow-md">
-            कृषि सेवा <span className="text-gold-light font-display">KRISHISEVA</span>
-          </h1>
-
-          <p className="text-xs sm:text-sm text-emerald-200/80 font-medium tracking-wide max-w-md mx-auto pt-1">
-            न्यूनतम समर्थन मूल्य (MSP) गारंटी • पारदर्शी तौल • 72 घंटे में सीधा बैंक भुगतान
-          </p>
-        </div>
+        <p className="text-xs sm:text-sm text-emerald-200/80 font-medium tracking-wide max-w-md mx-auto pt-2">
+          न्यूनतम समर्थन मूल्य (MSP) गारंटी • पारदर्शी तौल • 72 घंटे में सीधा बैंक भुगतान
+        </p>
 
         {/* Live Milestone Progress Ticker */}
         <div className="min-h-[44px] flex flex-col items-center justify-center px-4 py-1.5 mt-2">

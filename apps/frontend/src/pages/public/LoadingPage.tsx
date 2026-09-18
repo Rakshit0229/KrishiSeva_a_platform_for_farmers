@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { KrishiSproutLoader } from '../../components/common/KrishiSproutLoader';
+import { KrishiLetterSwap } from '../../components/common/KrishiLetterSwap';
 import { Button } from '../../components/ui/Button';
 import {
   Home,
@@ -48,6 +49,7 @@ export const LoadingPage: React.FC<LoadingPageProps> = ({
   const navigate = useNavigate();
   const [nuggetIndex, setNuggetIndex] = useState(0);
   const [progress, setProgress] = useState(25);
+  const [replayKey, setReplayKey] = useState(0);
 
   useEffect(() => {
     // Rotate knowledge nuggets every 4.5s
@@ -108,19 +110,18 @@ export const LoadingPage: React.FC<LoadingPageProps> = ({
       {/* Center Main Stage */}
       <div className="max-w-xl w-full mx-auto my-auto text-center space-y-6 py-6">
         {/* Animated Sprout Loader */}
-        <div className="py-2">
-          <KrishiSproutLoader size="xl" />
+        <div className="py-1">
+          <KrishiSproutLoader size="md" />
         </div>
 
-        {/* Title & Subtitle */}
-        <div className="space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary dark:text-white tracking-tight font-heading">
-            {title}
-          </h1>
-          <p className="text-sm text-text-muted dark:text-emerald-300/80 max-w-md mx-auto">
-            {subtitle}
-          </p>
+        {/* Kinetic Letter Swap Animation */}
+        <div className="py-2">
+          <KrishiLetterSwap key={replayKey} durationMs={1800} />
         </div>
+
+        <p className="text-xs sm:text-sm text-text-muted dark:text-emerald-300/80 max-w-md mx-auto">
+          {subtitle}
+        </p>
 
         {/* Animated Progress Bar */}
         <div className="max-w-md mx-auto space-y-2">
@@ -190,6 +191,16 @@ export const LoadingPage: React.FC<LoadingPageProps> = ({
           >
             <Compass className="w-4 h-4" />
             <span>मंडी देखें (Explore Mandis)</span>
+          </Button>
+
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={() => setReplayKey((k) => k + 1)}
+            className="flex items-center gap-2 font-medium"
+          >
+            <Sparkles className="w-4 h-4 text-gold" />
+            <span>पुनः एनिमेशन देखें (Replay Letter Swap)</span>
           </Button>
         </div>
       </div>
