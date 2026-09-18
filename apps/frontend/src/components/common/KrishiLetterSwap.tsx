@@ -119,20 +119,8 @@ export const KrishiLetterSwap: React.FC<KrishiLetterSwapProps> = ({
 
   return (
     <div className={`flex flex-col items-center justify-center select-none ${className}`}>
-      {/* Animated Sprout & Crown Accent when letters form */}
-      <div
-        className={`transition-all duration-700 ease-out mb-2 flex items-center justify-center ${
-          isFormed ? 'opacity-100 transform translate-y-0 scale-100' : 'opacity-0 transform -translate-y-4 scale-75'
-        }`}
-      >
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gold/15 dark:bg-gold/25 border border-gold/40 text-gold text-xs font-semibold tracking-wider shadow-[0_0_15px_rgba(212,160,23,0.3)]">
-          <Sparkles className="w-3.5 h-3.5 text-gold animate-spin" style={{ animationDuration: '4s' }} />
-          <span>सत्यापित राष्ट्रीय मंच • CERTIFIED</span>
-        </div>
-      </div>
-
       {/* Main Kinetic Letter Container */}
-      <div className="relative flex items-center justify-center gap-1 sm:gap-2 px-2 py-3">
+      <div className="relative flex items-center justify-center gap-1 sm:gap-2 px-2 py-2">
         {/* Background Radiant Aura behind letters */}
         <div
           className={`absolute inset-0 bg-gradient-to-r from-primary/30 via-gold/25 to-emerald-400/25 rounded-3xl blur-2xl transition-all duration-700 ${
@@ -210,9 +198,6 @@ export const KrishiLetterSwap: React.FC<KrishiLetterSwapProps> = ({
           </h2>
           <span className="h-[1px] w-8 bg-gradient-to-l from-transparent to-gold/70" />
         </div>
-        <p className="text-xs text-emerald-300/80 font-medium tracking-wide mt-1">
-          Smart MSP Procurement & Farmer Support
-        </p>
       </div>
     </div>
   );
